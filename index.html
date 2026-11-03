@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Manager">
 <meta name="robots" content="noindex, nofollow">
-<meta name="manager-wersja" content="2026-11-03 20:00 · 8874ca5">
+<meta name="manager-wersja" content="2026-11-03 20:33 · d93d0ca">
 <title>Manager · dysza.app</title>
 <link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="favicon.png">
 <style>
@@ -479,6 +479,8 @@ button.liczba:active{filter:brightness(.95)}
 .zesp-dod button::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--kol);flex:0 0 auto}
 .zesp-dod button[aria-pressed="true"]{background:var(--okTlo);color:var(--okTekst);border-color:var(--okRamka)}
 .mb small.tez{font-size:11px;font-weight:700;color:var(--tekst3);margin-left:-2px}
+/* dzióbek z boku dymka zawsze na prostym odcinku ramki — nie wjeżdża w zaokrąglony róg przy niskim dymku (poprawka 3.11) */
+.dymek.ogon-lewo::after,.dymek.ogon-prawo::after{top:clamp(20px,var(--ogon,40px),calc(100% - 38px))}
 
 </style>
 </head>
