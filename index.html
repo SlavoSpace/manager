@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Manager">
 <meta name="robots" content="noindex, nofollow">
-<meta name="manager-wersja" content="2026-11-03 14:36 · c85bbed">
+<meta name="manager-wersja" content="2026-11-03 20:00 · 8874ca5">
 <title>Manager · dysza.app</title>
 <link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="favicon.png">
 <style>
@@ -473,6 +473,12 @@ button.liczba:active{filter:brightness(.95)}
 .dymek .d-akcje button{background:transparent}
 .okno.statyczne{animation:none}
 @media (max-width:520px){.lista-gora .plikz{display:none}}
+/* „pracuje też w” — zespoły dodatkowe (004) */
+.zesp-dod{display:flex;gap:6px;flex-wrap:wrap}
+.zesp-dod button{--kol:var(--tekst3);display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 13px;border-radius:9px;border:1px solid var(--ramka2);font-size:13.5px;font-weight:700;color:var(--tekst2);background:var(--pow)}
+.zesp-dod button::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--kol);flex:0 0 auto}
+.zesp-dod button[aria-pressed="true"]{background:var(--okTlo);color:var(--okTekst);border-color:var(--okRamka)}
+.mb small.tez{font-size:11px;font-weight:700;color:var(--tekst3);margin-left:-2px}
 
 </style>
 </head>
@@ -810,6 +816,11 @@ const stIZesp = o => {
   return !n ? z : n.includes(z) ? n : `${n} · ${z}`;
 };
 const kolZesp = o => (ZESPOLY[o.zespol] || ZESPOLY.B).kol;
+/* zespół główny + „pracuje też w” (zespoly_dodatkowe, migracja 004) */
+const KOL_ZESP = ['F', 'R', 'T', 'M', 'B'];
+const dodZesp = o => (o.typ === 'osoba' ? (o.zespoly_dodatkowe || []).filter(z => ZESPOLY[z] && z !== o.zespol) : []);
+const tezW = o => { const d = dodZesp(o); return d.length ? ` · też ${d.map(z => ZESPOLY[z].nazwa).join(', ')}` : ''; };
+const wZespole = (o, z) => o.zespol === z || dodZesp(o).includes(z);
 const dostAkt = o => Object.entries(o.dostepy || {}).filter(([m, v]) => v && v.rola && MODUL[m] && !MODUL[m].wkrotce);
 const ileDost = d => Object.keys(d || {}).filter(m => d[m] && d[m].rola && MODUL[m] && !MODUL[m].wkrotce).length;
 const wysoka = d => Object.entries(d || {}).some(([m, v]) => v && ROLA[m] && ROLA[m][v.rola] && ROLA[m][v.rola].wysoka);
@@ -1094,7 +1105,7 @@ function renderPulpit() {
   const os = osoby().filter(o => o.status !== 'odeszla');
   const naMod = m => D.osoby.filter(o => aktywna(o) && o.dostepy && o.dostepy[m]).length;
   const max = Math.max(...MODULY.filter(m => !m.wkrotce).map(m => naMod(m.id)), 1);
-  const zesp = ['F', 'R', 'T', 'M', 'B'].map(z => [z, os.filter(o => o.zespol === z).length]);
+  const zesp = KOL_ZESP.map(z => [z, os.filter(o => o.zespol === z).length, os.filter(o => o.zespol !== z && dodZesp(o).includes(z)).length]);
   const j = ja();
   const logowania = D.dziennik.filter(x => x.rodzaj === 'logowanie' && Date.now() - new Date(x.kiedy) < 864e5);
   const rzeczy = [];
@@ -1140,7 +1151,7 @@ function renderPulpit() {
             <button class="liczba" data-a="filtr-zal" data-stan="bez"><b>${L.bez}</b><span>bez konta</span></button>
             <button class="liczba" data-a="filtr-zal" data-stan="zablokowani"><b>${L.zabl}</b><span>zablokowane</span></button>
           </div>
-          <div class="zespoly">${zesp.map(([z, n]) => `<button class="mb" style="--kol:${ZESPOLY[z].kol}" data-a="filtr-zal" data-zesp="${z}">${ZESPOLY[z].nazwa} <b>${n}</b></button>`).join('')}<button class="mb" style="--kol:var(--tekst3)" data-a="filtr-zal" data-stan="urzadzenia">urządzenia i system <b>${L.urz}</b></button></div>
+          <div class="zespoly">${zesp.map(([z, n, d]) => `<button class="mb" style="--kol:${ZESPOLY[z].kol}" data-a="filtr-zal" data-zesp="${z}" title="${n} w zespole${d ? ` i ${d} — pracuje tu też` : ''}">${ZESPOLY[z].nazwa} <b>${n}</b>${d ? `<small class="tez">+${d} też</small>` : ''}</button>`).join('')}<button class="mb" style="--kol:var(--tekst3)" data-a="filtr-zal" data-stan="urzadzenia">urządzenia i system <b>${L.urz}</b></button></div>
         </div>
         <div class="karta">
           <div class="karta-tyt"><h2>Kto ma dostęp</h2><button class="link" data-a="ekran" data-v="moduly">Moduły i role ${ik('dalej', 'mala')}</button></div>
@@ -1169,7 +1180,7 @@ function pasujeZal(o) {
   else if (urzS) return false;
   if (f.stan === 'odeszli') { if (o.status !== 'odeszla') return false; }
   else if (o.status === 'odeszla' && f.stan !== 'urzadzenia') return false;
-  if (f.zesp !== 'wszyscy' && o.zespol !== f.zesp) return false;
+  if (f.zesp !== 'wszyscy' && !wZespole(o, f.zesp)) return false;
   if (f.stan === 'konto' && !(o.konto && aktywna(o))) return false;
   if (f.stan === 'bez' && o.konto) return false;
   if (f.stan === 'zablokowani' && o.status !== 'zablokowana') return false;
@@ -1182,7 +1193,7 @@ function pasujeZal(o) {
   }
   if (f.szukaj) {
     const q = bezOgonkow(f.szukaj).trim();
-    const w = bezOgonkow(`${o.imie} ${o.nazwisko} ${o.kafelek || ''} ${o.login || ''} ${(o.stare || []).map(x => x.login).join(' ')} ${nazwaSt(o)} ${ZESPOLY[o.zespol] ? ZESPOLY[o.zespol].nazwa : ''}`);
+    const w = bezOgonkow(`${o.imie} ${o.nazwisko} ${o.kafelek || ''} ${o.login || ''} ${(o.stare || []).map(x => x.login).join(' ')} ${nazwaSt(o)} ${ZESPOLY[o.zespol] ? ZESPOLY[o.zespol].nazwa : ''} ${dodZesp(o).map(z => ZESPOLY[z].nazwa).join(' ')}`);
     if (!q.split(/\s+/).every(cz => w.includes(cz))) return false;
   }
   return true;
@@ -1204,14 +1215,15 @@ function wierszOsoby(o) {
     ${awatarOsoby(o)}
     <span class="w-tr">
       <span class="w-imie">${esc(pelne(o))}<small class="mono">${esc(o.login)}</small></span>
-      <span class="w-meta">${esc(stIZesp(o))}</span>
+      <span class="w-meta">${esc(stIZesp(o) + tezW(o))}</span>
       ${mods.length ? `<span class="w-mod">${mods.map(([m, v]) => `<span class="mb" style="--kol:${MODUL[m].kol}">${esc(MODUL[m].nazwa.split(' ·')[0].replace(' Mocy', ''))} · <b>${esc(opisDost(m, v))}</b></span>`).join('')}</span>` : ''}
     </span>
     <span class="w-stan">${stan.join('')}</span>
   </button>`;
 }
 function renderListaZal() {
-  const lista = D.osoby.filter(pasujeZal).sort((a, b) => (a.typ === b.typ ? 0 : a.typ === 'osoba' ? -1 : 1) || a.imie.localeCompare(b.imie, 'pl') || a.nazwisko.localeCompare(b.nazwisko, 'pl'));
+  const zf = S.zal.zesp, glZ = o => (zf !== 'wszyscy' && o.zespol !== zf ? 1 : 0);
+  const lista = D.osoby.filter(pasujeZal).sort((a, b) => (a.typ === b.typ ? 0 : a.typ === 'osoba' ? -1 : 1) || glZ(a) - glZ(b) || a.imie.localeCompare(b.imie, 'pl') || a.nazwisko.localeCompare(b.nazwisko, 'pl'));
   const n = lista.length;
   const licz = $('#licz-zal'); if (licz) licz.innerHTML = `<span>${n} ${odm(n, 'pozycja', 'pozycje', 'pozycji')}</span>${S.zal.szukaj || S.zal.zesp !== 'wszyscy' || S.zal.stan !== 'wszyscy' || S.zal.modul !== 'wszystkie' ? '<button class="link" data-a="filtry-zero" style="min-height:0">Wyczyść filtry</button>' : ''}`;
   const el = $('#lista-zal');
@@ -1284,7 +1296,7 @@ function renderOsoba(o) {
   return `<div class="osoba">
     <div class="osoba-gora">
       ${awatarOsoby(o, 'duzy')}
-      <div style="flex:1;min-width:0"><h2>${esc(pelne(o))}</h2><p>${esc(stIZesp(o))}${o.typ === 'osoba' ? ` · ${o.jezyk === 'ua' ? 'język UA' : 'język PL'}` : ''}${o.kafelek && o.kafelek !== o.imie && !sys ? ` · na kafelku: ${esc(o.kafelek)}` : ''}</p></div>
+      <div style="flex:1;min-width:0"><h2>${esc(pelne(o))}</h2><p>${esc(stIZesp(o) + tezW(o))}${o.typ === 'osoba' ? ` · ${o.jezyk === 'ua' ? 'język UA' : 'język PL'}` : ''}${o.kafelek && o.kafelek !== o.imie && !sys ? ` · na kafelku: ${esc(o.kafelek)}` : ''}</p></div>
       ${zabl ? `<span class="pill bl">${statusTekst(o)}</span>` : o.konto ? `<span class="pill ok">aktywne konto</span>` : '<span class="pill cicha">bez konta</span>'}
     </div>
     <div class="osoba-akcje">
@@ -1638,6 +1650,7 @@ function oknoNowa(ok) {
       <div class="pole"><span class="etykieta">Zespół</span><div class="seg">${(urz ? ['F', 'R'] : ['F', 'R', 'T', 'M', 'B']).map(z => `<button data-a="n-zesp" data-v="${z}" aria-pressed="${f.zespol === z}">${ZESPOLY[z].nazwa}</button>`).join('')}</div></div>
       ${urz ? '' : `<div class="pole"><span class="etykieta">Język aplikacji</span><div class="seg"><button data-a="n-jez" data-v="pl" aria-pressed="${f.jezyk === 'pl'}">Polski</button><button data-a="n-jez" data-v="ua" aria-pressed="${f.jezyk === 'ua'}">Українська</button></div></div>`}
     </div>
+    ${urz ? '' : polePracujeTez(f)}
     <div class="dwie">
       <div class="pole"><label class="etykieta" for="n-login">Login</label><input id="n-login" class="mono" data-w="n-login" value="${esc(f.login)}" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="ułożę z ${urz ? 'nazwy i miejsca' : 'imienia i nazwiska'}">${ok.bledy.login ? `<span class="blad">${esc(ok.bledy.login)}</span>` : `<span class="pomoc">${T(f.loginRecz ? 'Wpisany ręcznie — zaczyna się wielką literą, bez polskich znaków.' : 'Pełne imię i dwie pierwsze litery nazwiska. Przy powtórce — kolejna litera.')}</span>`}</div>
       <div class="pole"><span class="etykieta">Konto — PIN ${dl} cyfr</span><div class="seg"><button data-a="n-konto" data-v="1" aria-pressed="${f.konto}">${ik('klucz', 'mala')} Konto i PIN teraz</button><button data-a="n-konto" data-v="0" aria-pressed="${!f.konto}">Tylko w kartotece</button></div>
@@ -1675,6 +1688,12 @@ function oknoBlokada(ok) {
   </div>
   <div class="okno-d"><button class="drugi" data-a="zamknij" ${S.zajety ? 'disabled' : ''}>Anuluj</button><button class="glowny czerwony" data-a="bl-tak" ${ok.powod && !S.zajety ? '' : 'disabled'}>${ik('blokada', 'mala')} ${S.zajety ? 'Blokuję…' : ok.drugi ? 'Na pewno? Stuknij jeszcze raz' : 'Zablokuj wszędzie'}</button></div></div>`;
 }
+function polePracujeTez(f) {
+  const d = f.dodatkowe || [];
+  return `<div class="pole"><span class="etykieta">Pracuje też w — nieobowiązkowe</span>
+    <div class="zesp-dod" role="group" aria-label="Pracuje też w">${KOL_ZESP.filter(z => z !== f.zespol).map(z => `<button data-a="zesp-dod" data-v="${z}" aria-pressed="${d.includes(z)}" style="--kol:${ZESPOLY[z].kol}">${ZESPOLY[z].nazwa}</button>`).join('')}</div>
+    <span class="pomoc">${T('Zaznacz, jeśli ta osoba bierze zmiany także w innym zespole — przyda się w harmonogramach.')}</span></div>`;
+}
 function oknoDane(ok) {
   const f = ok.f;
   const o = PO_ID[ok.id];
@@ -1684,6 +1703,7 @@ function oknoDane(ok) {
     ${sys ? '' : `<div class="dwie"><div class="pole"><label class="etykieta" for="d-imie">${urz ? 'Nazwa' : 'Imię'}</label><input id="d-imie" data-w="d-imie" value="${esc(f.imie)}"></div><div class="pole"><label class="etykieta" for="d-nazw">${urz ? 'Miejsce' : 'Nazwisko'}</label><input id="d-nazw" data-w="d-nazw" value="${esc(f.nazwisko)}"></div></div>
     ${urz ? '' : `<div class="pole"><label class="etykieta" for="d-kaf">Imię na kafelku — nieobowiązkowe</label><input id="d-kaf" data-w="d-kaf" value="${esc(f.kafelek)}" placeholder="np. Kasia"></div>`}
     <div class="pole"><span class="etykieta">Zespół</span><div class="seg">${(urz ? ['F', 'R'] : ['F', 'R', 'T', 'M', 'B']).map(z => `<button data-a="d-zesp" data-v="${z}" aria-pressed="${f.zespol === z}">${ZESPOLY[z].nazwa}</button>`).join('')}</div></div>
+    ${urz ? '' : polePracujeTez(f)}
     ${urz ? '' : `<div class="dwie"><div class="pole"><label class="etykieta" for="d-st">Stanowisko</label><select id="d-st" data-w="d-st"><option value="">—</option>${D.stanowiska.map(s => `<option value="${s.id}" ${f.stanowisko === s.id ? 'selected' : ''}>${esc(s.nazwa)}</option>`).join('')}</select></div>
     <div class="pole"><span class="etykieta">Język aplikacji</span><div class="seg"><button data-a="d-jez" data-v="pl" aria-pressed="${f.jezyk === 'pl'}">Polski</button><button data-a="d-jez" data-v="ua" aria-pressed="${f.jezyk === 'ua'}">Українська</button></div></div></div>`}
     ${o.konto ? '' : `<div class="pole"><label class="etykieta" for="d-login">Login</label><input id="d-login" class="mono" data-w="d-login" value="${esc(f.login)}" autocapitalize="off" autocorrect="off" spellcheck="false"><span class="pomoc">${T('Login zmienisz tylko do założenia konta. Potem zostaje na stałe.')}</span></div>`}`}
@@ -1957,6 +1977,8 @@ function pokazOsobe(id) {
   render();
   setTimeout(() => { const w = $(`.wiersz[data-id="${id}"]`); if (w) w.scrollIntoView({ block: 'nearest' }); }, 30);
 }
+// nowy zespół główny schodzi z listy „pracuje też w”
+function ustawZespol(f, z) { f.zespol = z; if (f.dodatkowe) f.dodatkowe = f.dodatkowe.filter(x => x !== z); }
 function otworzNowa(typ) {
   S.menu = false;
   const st = typ === 'osoba' ? (STANOWISKA.kuchF ? 'kuchF' : (D.stanowiska[0] || {}).id) : null;
@@ -1964,7 +1986,7 @@ function otworzNowa(typ) {
   S.okno = {
     rodzaj: 'nowa', bledy: {}, blad: '',
     f: {
-      typ, imie: typ === 'urzadzenie' ? 'Kokpit' : '', nazwisko: '', kafelek: '', stanowisko: st,
+      typ, imie: typ === 'urzadzenie' ? 'Kokpit' : '', nazwisko: '', kafelek: '', stanowisko: st, dodatkowe: [],
       zespol: pre ? pre.zespol : 'F', jezyk: 'pl', konto: pre ? pre.konto : true, login: '', loginRecz: false,
       dostepy: pre ? kopiaDost(pre.dostepy) : { tablica: { rola: 'ekran', sekcje: D.sekcje.includes('FABRYKA') ? ['FABRYKA'] : D.sekcje.slice(0, 1) } },
     },
@@ -2162,10 +2184,15 @@ const AKCJE = {
   /* dane osoby */
   'edytuj-dane': el => {
     const o = PO_ID[el.dataset.id];
-    S.okno = { rodzaj: 'dane', id: o.id, blad: '', f: { imie: o.imie, nazwisko: o.nazwisko, kafelek: o.kafelek || '', zespol: o.zespol, stanowisko: o.stanowisko || '', jezyk: o.jezyk, notatka: o.notatka || '', login: o.login }, wroc: S.okno && S.okno.rodzaj === 'osoba' ? S.okno : null };
+    S.okno = { rodzaj: 'dane', id: o.id, blad: '', f: { imie: o.imie, nazwisko: o.nazwisko, kafelek: o.kafelek || '', zespol: o.zespol, dodatkowe: dodZesp(o), stanowisko: o.stanowisko || '', jezyk: o.jezyk, notatka: o.notatka || '', login: o.login }, wroc: S.okno && S.okno.rodzaj === 'osoba' ? S.okno : null };
     render();
   },
-  'd-zesp': el => { S.okno.f.zespol = el.dataset.v; render(); },
+  'd-zesp': el => { ustawZespol(S.okno.f, el.dataset.v); render(); },
+  'zesp-dod': el => {   // „pracuje też w” — w oknie Dane i Nowa osoba
+    const f = S.okno.f; const z = el.dataset.v; const d = f.dodatkowe || [];
+    f.dodatkowe = KOL_ZESP.filter(x => x !== f.zespol && (x === z ? !d.includes(z) : d.includes(x)));
+    render();
+  },
   'd-jez': el => { S.okno.f.jezyk = el.dataset.v; render(); },
   'd-zapisz': async () => {
     const ok = S.okno; const o = PO_ID[ok.id]; const f = ok.f;
@@ -2174,7 +2201,7 @@ const AKCJE = {
     else {
       if (!f.imie.trim() || !f.nazwisko.trim()) { ok.blad = 'Imię i nazwisko nie mogą być puste.'; render(); potrzasnij(); return; }
       Object.assign(p, { imie: f.imie, nazwisko: f.nazwisko, zespol: f.zespol, notatka: f.notatka });
-      if (o.typ === 'osoba') Object.assign(p, { kafelek: f.kafelek, stanowisko: f.stanowisko || '', jezyk: f.jezyk });
+      if (o.typ === 'osoba') Object.assign(p, { kafelek: f.kafelek, stanowisko: f.stanowisko || '', jezyk: f.jezyk, zespoly_dodatkowe: (f.dodatkowe || []).filter(z => z !== f.zespol) });
       if (!o.konto && f.login.trim() && f.login.trim() !== o.login) p.login = f.login.trim();
     }
     const r = await wykonaj(() => API.zapiszOsobe(p), true);
@@ -2187,8 +2214,8 @@ const AKCJE = {
   /* nowa osoba / urządzenie */
   'nowa-osoba': () => otworzNowa('osoba'),
   'nowe-urzadzenie': () => otworzNowa('urzadzenie'),
-  'n-st': el => { const f = S.okno.f; const st = STANOWISKA[el.dataset.v]; f.stanowisko = el.dataset.v; f.zespol = st.zespol; f.konto = st.konto; f.dostepy = kopiaDost(st.dostepy); render(); },
-  'n-zesp': el => { S.okno.f.zespol = el.dataset.v; render(); },
+  'n-st': el => { const f = S.okno.f; const st = STANOWISKA[el.dataset.v]; f.stanowisko = el.dataset.v; ustawZespol(f, st.zespol); f.konto = st.konto; f.dostepy = kopiaDost(st.dostepy); render(); },
+  'n-zesp': el => { ustawZespol(S.okno.f, el.dataset.v); render(); },
   'n-jez': el => { S.okno.f.jezyk = el.dataset.v; render(); },
   'n-konto': el => { S.okno.f.konto = el.dataset.v === '1'; render(); },
   'n-przel': el => { const f = S.okno.f; zmienDost(f.dostepy, el.dataset.m, 'przel', el, f); render(); },
@@ -2204,7 +2231,7 @@ const AKCJE = {
     if (f.konto && !ileDost(f.dostepy)) ok.blad = 'Konto bez żadnego dostępu nic nie otworzy — włącz choć jeden moduł albo wybierz „Tylko w kartotece”.';
     if (Object.keys(b).length || ok.blad) { render(); potrzasnij(); return; }
     const p = { typ: f.typ, imie: f.imie, nazwisko: f.nazwisko, zespol: f.zespol, dostepy: f.dostepy };
-    if (!urz) Object.assign(p, { kafelek: f.kafelek, stanowisko: f.stanowisko || '', jezyk: f.jezyk });
+    if (!urz) Object.assign(p, { kafelek: f.kafelek, stanowisko: f.stanowisko || '', jezyk: f.jezyk, zespoly_dodatkowe: (f.dodatkowe || []).filter(z => z !== f.zespol) });
     if (f.loginRecz && f.login) p.login = f.login;
     S.zajety = true; render();
     let o;
