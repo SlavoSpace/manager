@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Manager">
 <meta name="robots" content="noindex, nofollow">
-<meta name="manager-wersja" content="2026-11-03 20:33 · d93d0ca">
+<meta name="manager-wersja" content="2026-11-04 09:56 · 8544fd2">
 <title>Manager · dysza.app</title>
 <link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="favicon.png">
 <style>
@@ -481,6 +481,34 @@ button.liczba:active{filter:brightness(.95)}
 .mb small.tez{font-size:11px;font-weight:700;color:var(--tekst3);margin-left:-2px}
 /* dzióbek z boku dymka zawsze na prostym odcinku ramki — nie wjeżdża w zaokrąglony róg przy niskim dymku (poprawka 3.11) */
 .dymek.ogon-lewo::after,.dymek.ogon-prawo::after{top:clamp(20px,var(--ogon,40px),calc(100% - 38px))}
+/* Architekt (005) — złoto ponad kolorami modułów */
+:root{--arch:#e8c06a;--archTlo:rgba(232,192,106,.12);--archRamka:rgba(232,192,106,.55)}
+.arch{display:inline-flex;align-items:center;gap:5px;padding:2px 9px 2px 7px;border-radius:999px;border:1px solid var(--archRamka);background:var(--archTlo);color:var(--arch);font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;vertical-align:middle}
+.arch .ikona{width:14px;height:14px;stroke-width:2.2}
+.arch.duza{font-size:13.5px;padding:4px 12px 4px 9px;gap:6px}
+.arch.duza .ikona{width:16px;height:16px}
+h2 .arch{margin-left:6px;position:relative;top:-2px}
+.arch-t{color:var(--arch);font-weight:800}
+.arch-pod{font-size:12px;color:var(--tekst3);margin-left:6px}
+.awatar.arch-aw{box-shadow:0 0 0 2px var(--pow),0 0 0 4px var(--arch)}
+.arch-info{border-color:var(--archRamka);background:var(--archTlo)}
+.arch-info .ikona{color:var(--arch)}
+.arch-pill{color:var(--arch);border-color:var(--archRamka);background:var(--archTlo)}
+.arch-moduly{display:grid;gap:6px}
+.arch-m{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--ramka);border-radius:12px;background:var(--pow2)}
+.arch-m .tr{flex:1;min-width:0;display:flex;flex-direction:column}
+.arch-m small{font-size:12px;color:var(--tekst3)}
+.arch-m.nastepne{border-style:dashed;--kol:var(--arch)}
+.arch-belka b{color:var(--arch)}
+.arch-belka .tor i{background:linear-gradient(90deg,var(--archRamka),var(--arch))}
+.arch-karta{border-color:var(--archRamka);background:linear-gradient(180deg,var(--archTlo),transparent 70%)}
+.arch-karta h2 .arch{margin-left:0;top:0}
+.arch-kto{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.arch-osoba{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:12px;border:1px solid var(--ramka);background:var(--pow)}
+.arch-osoba small{color:var(--tekst3);font-size:12px}
+.role-t tr.arch-w td{color:var(--arch)}
+.arch-info,.arch-info span{color:var(--tekst)}
+.arch-info b{color:var(--arch)}
 
 </style>
 </head>
@@ -538,6 +566,7 @@ var BLEDY = {
   NIE_MA_KONTA: 'Nie ma takiego starego konta.',
   ZABLOKOWANA: 'Osoba jest zablokowana — najpierw ją odblokuj.',
   SIEBIE: 'Nie da się zablokować siebie.',
+  ARCHITEKT: 'Kartę Architekta zmienia tylko Architekt.',
   BRAK_LOGINU: 'Nie umiem ułożyć loginu — wpisz go ręcznie.',
   ZLE_DANE: 'Złe dane — odśwież stronę i spróbuj jeszcze raz.'
 };
@@ -735,6 +764,7 @@ const IK = {
   szukaj: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   klucz: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14 9l2 2"/>',
+  architekt: '<circle cx="12" cy="4.5" r="2"/><path d="M11 6.5 5.5 21M13 6.5 18.5 21M8 15.5h8"/>',
   karta: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 10h6M7 14h4"/><circle cx="16.5" cy="12" r="1.6"/>',
   blokada: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   odblokuj: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/>',
@@ -805,6 +835,12 @@ function podmienOsobe(o) {
   if (D.ja && D.ja.osoba && D.ja.osoba.id === o.id) D.ja.osoba = o;
 }
 const ja = () => (D.ja && D.ja.osoba) || null;
+/* Architekt (migracja 005): poziom ponad modułami — najwyższy w każdym module, obecnym i przyszłym;
+   jego kartę zmienia tylko Architekt (pilnuje tego baza, ekran tylko nie kusi) */
+const architekt = o => !!(o && o.typ === 'osoba' && o.architekt);
+const jaArchitekt = () => architekt(ja());
+const mozeZmieniac = o => !architekt(o) || jaArchitekt();
+const odznakaArch = (kl = '') => `<span class="arch ${kl}">${ik('architekt', 'mala')}Architekt</span>`;
 const osoby = () => D.osoby.filter(o => o.typ === 'osoba');
 const urzadzenia = () => D.osoby.filter(o => o.typ !== 'osoba');
 const pelne = o => (o ? (o.typ === 'system' ? o.kafelek || o.imie : `${o.imie} ${o.nazwisko}`.trim()) : '');
@@ -826,12 +862,12 @@ const wZespole = (o, z) => o.zespol === z || dodZesp(o).includes(z);
 const dostAkt = o => Object.entries(o.dostepy || {}).filter(([m, v]) => v && v.rola && MODUL[m] && !MODUL[m].wkrotce);
 const ileDost = d => Object.keys(d || {}).filter(m => d[m] && d[m].rola && MODUL[m] && !MODUL[m].wkrotce).length;
 const wysoka = d => Object.entries(d || {}).some(([m, v]) => v && ROLA[m] && ROLA[m][v.rola] && ROLA[m][v.rola].wysoka);
-const pinWymagany = (o, d) => (o.typ === 'system' ? 40 : wysoka(d || o.dostepy) ? 8 : 6);
+const pinWymagany = (o, d) => (o.typ === 'system' ? 40 : architekt(o) || wysoka(d || o.dostepy) ? 8 : 6);
 const pinDoWymiany = o => o.konto && o.pin_dlugosc && o.typ !== 'system' && o.pin_dlugosc < o.pin_wymagany;
 // Etap 2: nowe loginy działają tylko w managerze. Po przełączeniu Tablicy, Spisu i Raportów na wspólne logowanie
 // (Etap 3) — true: wtedy Pulpit i Dzień Kart zapraszają do kont i kart dla całej załogi.
 const MODULY_PRZELACZONE = false;
-const doKarty = o => o.typ === 'osoba' && aktywna(o) && ileDost(o.dostepy) > 0 && !o.karta_kiedy;
+const doKarty = o => o.typ === 'osoba' && aktywna(o) && ileDost(o.dostepy) > 0 && !o.karta_kiedy && mozeZmieniac(o);
 const rolaKrotko = (m, r) => { const x = ROLA[m] && ROLA[m][r]; return !x ? r : x.krotko ? x.krotko : x.nazwa.toLowerCase(); };
 const sekKrotko = sek => (sek || []).map(s => (s === 'WYNOS' ? 'W' : s === 'FABRYKA' ? 'F' : s[0])).join('+');
 function opisPelny(m, v) {
@@ -924,7 +960,7 @@ function liczniki() {
   const zabl = os.filter(o => o.status === 'zablokowana').length;
   const bez = os.filter(o => !o.konto).length;
   const doKart = os.filter(doKarty).length;
-  const prosby = os.filter(o => o.prosba_pin && aktywna(o));
+  const prosby = os.filter(o => o.prosba_pin && aktywna(o) && mozeZmieniac(o));
   const doWymiany = os.filter(o => aktywna(o) && pinDoWymiany(o));
   const bezKonta = os.filter(o => aktywna(o) && !o.konto && ileDost(o.dostepy) > 0);
   const p = D.przejscie || {};
@@ -1158,6 +1194,7 @@ function renderPulpit() {
         <div class="karta">
           <div class="karta-tyt"><h2>Kto ma dostęp</h2><button class="link" data-a="ekran" data-v="moduly">Moduły i role ${ik('dalej', 'mala')}</button></div>
           <div class="belki">
+            ${D.osoby.some(o => architekt(o) && aktywna(o)) ? `<div class="belka arch-belka"><span>${odznakaArch()}</span><span class="tor"><i style="width:100%"></i></span><b>${D.osoby.filter(o => architekt(o) && aktywna(o)).length}</b></div>` : ''}
             ${MODULY.map(m => m.wkrotce
     ? `<div class="belka wkrotce"><span>${esc(m.nazwa)}</span><span class="tor"></span><b>wkrótce</b></div>`
     : `<div class="belka" style="--kol:${m.kol}"><span>${esc(m.nazwa)}</span><span class="tor"><i style="width:${Math.round(100 * naMod(m.id) / max)}%"></i></span><b>${naMod(m.id)}</b></div>`).join('')}
@@ -1203,7 +1240,7 @@ function pasujeZal(o) {
 function awatarOsoby(o, kl = '') {
   if (o.typ === 'system') return `<span class="awatar ${kl} sys" style="--kol:var(--mMan)">Z</span>`;
   if (o.typ === 'urzadzenie') return `<span class="awatar ${kl} urz" style="--kol:${kolZesp(o)}">${ik('ekran', kl === 'duzy' ? '' : 'mala')}</span>`;
-  return `<span class="awatar ${kl}" style="--kol:${kolZesp(o)}">${esc((o.imie || '?')[0])}</span>`;
+  return `<span class="awatar ${kl}${architekt(o) ? ' arch-aw' : ''}" style="--kol:${kolZesp(o)}">${esc((o.imie || '?')[0])}</span>`;
 }
 function wierszOsoby(o) {
   const mods = dostAkt(o);
@@ -1218,7 +1255,7 @@ function wierszOsoby(o) {
     <span class="w-tr">
       <span class="w-imie">${esc(pelne(o))}<small class="mono">${esc(o.login)}</small></span>
       <span class="w-meta">${esc(stIZesp(o) + tezW(o))}</span>
-      ${mods.length ? `<span class="w-mod">${mods.map(([m, v]) => `<span class="mb" style="--kol:${MODUL[m].kol}">${esc(MODUL[m].nazwa.split(' ·')[0].replace(' Mocy', ''))} · <b>${esc(opisDost(m, v))}</b></span>`).join('')}</span>` : ''}
+      ${architekt(o) ? `<span class="w-mod">${odznakaArch()}<span class="arch-pod">wszystkie moduły, obecne i przyszłe</span></span>` : mods.length ? `<span class="w-mod">${mods.map(([m, v]) => `<span class="mb" style="--kol:${MODUL[m].kol}">${esc(MODUL[m].nazwa.split(' ·')[0].replace(' Mocy', ''))} · <b>${esc(opisDost(m, v))}</b></span>`).join('')}</span>` : ''}
     </span>
     <span class="w-stan">${stan.join('')}</span>
   </button>`;
@@ -1298,34 +1335,38 @@ function renderOsoba(o) {
   return `<div class="osoba">
     <div class="osoba-gora">
       ${awatarOsoby(o, 'duzy')}
-      <div style="flex:1;min-width:0"><h2>${esc(pelne(o))}</h2><p>${esc(stIZesp(o) + tezW(o))}${o.typ === 'osoba' ? ` · ${o.jezyk === 'ua' ? 'język UA' : 'język PL'}` : ''}${o.kafelek && o.kafelek !== o.imie && !sys ? ` · na kafelku: ${esc(o.kafelek)}` : ''}</p></div>
+      <div style="flex:1;min-width:0"><h2>${esc(pelne(o))}${architekt(o) ? ` ${odznakaArch('duza')}` : ''}</h2><p>${esc(stIZesp(o) + tezW(o))}${o.typ === 'osoba' ? ` · ${o.jezyk === 'ua' ? 'język UA' : 'język PL'}` : ''}${o.kafelek && o.kafelek !== o.imie && !sys ? ` · na kafelku: ${esc(o.kafelek)}` : ''}</p></div>
       ${zabl ? `<span class="pill bl">${statusTekst(o)}</span>` : o.konto ? `<span class="pill ok">aktywne konto</span>` : '<span class="pill cicha">bez konta</span>'}
     </div>
-    <div class="osoba-akcje">
+    ${!mozeZmieniac(o) ? '' : `<div class="osoba-akcje">
       ${zabl ? `<button class="glowny maly" data-a="odblokuj" data-id="${o.id}">${ik('odblokuj')} Przywróć dostęp</button>` : ''}
       ${!zabl && o.konto ? `<button class="drugi ${o.prosba_pin || pinDoWymiany(o) ? 'uwaga' : ''}" data-a="nowy-pin" data-id="${o.id}">${ik('klucz', 'mala')} ${sys ? 'Nowy klucz' : 'Nowy PIN'}${o.prosba_pin ? ' — prośba' : ''}</button>` : ''}
       ${!zabl && !o.konto ? `<button class="glowny maly" data-a="nowy-pin" data-id="${o.id}">${ik('plus', 'mala')} Załóż konto</button>` : ''}
       <button class="drugi" data-a="edytuj-dane" data-id="${o.id}">${ik('edytuj', 'mala')} ${sys ? 'Notatka' : 'Dane'}</button>
       ${!zabl && !toJa ? `<button class="drugi czerwony" data-a="zablokuj" data-id="${o.id}">${ik('blokada', 'mala')} Zablokuj wszędzie</button>` : ''}
-    </div>
+    </div>`}
     ${zabl ? `<div class="info bl">${ik('blokada')}<span>${T(`${o.status === 'odeszla' ? rz(o, 'Odszedł', 'Odeszła') + ' z pracy' : rz(o, 'Zablokowany', 'Zablokowana')}${o.powod ? ` · ${o.powod}` : ''}. Nie wejdzie do żadnego modułu — dostępy czekają na przywrócenie.`)}</span></div>` : ''}
-    ${toJa ? `<div class="info">${ik('info')}<span>${T('To Twoje konto. Nie zablokujesz siebie i nie odbierzesz sobie roli kierownika w managerze.')}</span></div>` : ''}
+    ${architekt(o) ? `<div class="info arch-info">${ik('architekt')}<span><b>Architekt</b> — ${T('założyciel firmy i projektant jej systemu. Najwyższy poziom w każdym module, obecnym i przyszłym.')} ${T(toJa ? 'To Twoja karta — zmieniasz ją tylko Ty.' : 'Kartę Architekta zmienia tylko Architekt.')}</span></div>`
+      : toJa ? `<div class="info">${ik('info')}<span>${T('To Twoje konto. Nie zablokujesz siebie i nie odbierzesz sobie roli kierownika w managerze.')}</span></div>` : ''}
     ${sys ? `<div class="info">${ik('info')}<span>${T('ZDZISŁAW to konto systemowe automatów (Raporty, Spis, plik Z). Nie jest pracownikiem — nie trafia na listy obecności. Zamiast PIN-u ma klucz 40 znaków, bez karty.')}</span></div>` : ''}
     <section class="blok"><h3 class="etykieta">Konto</h3>
       <dl class="dl">
         <dt>Login</dt><dd><span class="login">${esc(o.login)}</span><small>${urz ? 'konto urządzenia — PIN wpisuje kierownik na ekranie' : sys ? 'konto systemowe' : 'pełne imię i dwie pierwsze litery nazwiska; wielkość liter przy wpisywaniu bez znaczenia'}${o.konto ? '' : ' · konto jeszcze nie założone'}</small></dd>
-        ${o.konto ? `<dt>${sys ? 'Klucz' : 'PIN'}</dt><dd>${sys ? '40 znaków' : `${o.pin_dlugosc || '?'} cyfr`}${pinDoWymiany(o) ? `<small class="uw-t">${T(`do wymiany — rola wymaga ${o.pin_wymagany} cyfr`)}</small>` : !sys && dlPin === 8 ? '<small>8 cyfr, bo ma rolę szefa albo kierownika</small>' : ''}${o.pin_kiedy ? `<small>ustawiony ${kiedy(o.pin_kiedy)}</small>` : ''}</dd>` : `<dt>${sys ? 'Klucz' : 'PIN'}</dt><dd>${sys ? 'klucz 40 znaków' : `${dlPin} cyfr`}<small>${T(`powstanie razem z kontem — zobaczysz go raz`)}</small></dd>`}
-        ${o.typ === 'osoba' ? `<dt>Karta</dt><dd>${o.karta_kiedy ? `<span class="pill ok">przygotowana</span><small>${kiedy(o.karta_kiedy)}</small>` : ileDost(o.dostepy) && aktywna(o) ? `<span class="pill uw">do przygotowania</span><small>${T('w Dniu Kart albo przez „Nowy PIN”')}</small>` : '—'}</dd>` : ''}
+        ${o.konto ? `<dt>${sys ? 'Klucz' : 'PIN'}</dt><dd>${sys ? '40 znaków' : `${o.pin_dlugosc || '?'} cyfr`}${pinDoWymiany(o) ? `<small class="uw-t">${T(`do wymiany — rola wymaga ${o.pin_wymagany} cyfr`)}</small>` : !sys && dlPin === 8 ? (architekt(o) ? '<small>8 cyfr — Architekt</small>' : '<small>8 cyfr, bo ma rolę szefa albo kierownika</small>') : ''}${o.pin_kiedy ? `<small>ustawiony ${kiedy(o.pin_kiedy)}</small>` : ''}</dd>` : `<dt>${sys ? 'Klucz' : 'PIN'}</dt><dd>${sys ? 'klucz 40 znaków' : `${dlPin} cyfr`}<small>${T(`powstanie razem z kontem — zobaczysz go raz`)}</small></dd>`}
+        ${o.typ === 'osoba' ? `<dt>Karta</dt><dd>${o.karta_kiedy ? `<span class="pill ok">przygotowana</span><small>${kiedy(o.karta_kiedy)}</small>` : ileDost(o.dostepy) && aktywna(o) ? `<span class="pill uw">do przygotowania</span><small>${T(mozeZmieniac(o) ? 'w Dniu Kart albo przez „Nowy PIN”' : 'przygotowuje sam Architekt')}</small>` : '—'}</dd>` : ''}
         ${o.prosba_pin && aktywna(o) ? `<dt>Prośba</dt><dd><span class="pill uw">nowy PIN</span><small>z ekranu logowania, ${kiedy(o.prosba_pin)}</small></dd>` : ''}
         <dt>Ostatnie logowanie</dt><dd>${o.ostatnio ? kiedy(o.ostatnio) : (o.konto || (o.stare || []).length ? 'jeszcze się nie logował' + (zenski(o.imie) ? 'a' : '') : '—')}</dd>
         ${(o.stare || []).length ? `<dt>Stare loginy</dt><dd>${o.stare.map(s => `<div><span class="mono">${esc(s.login)}</span> <span class="pill">${esc(MOD_STARY[s.modul] || s.modul)}</span> <small style="display:inline">${s.wygasa ? `działa do ${dzienKr(s.wygasa)}` : 'działa do przełączenia modułu'}</small></div>`).join('')}</dd>` : ''}
         ${o.notatka ? `<dt>Notatka</dt><dd>${T(o.notatka)}</dd>` : ''}
       </dl>
     </section>
-    <section class="blok"><h3 class="etykieta"><span>Dostępy do modułów</span>${ileDost(d) ? `<span class="pill">${ileDost(d)} z ${MODULY.filter(m => !m.wkrotce && roleDla(o, m).length).length}</span>` : ''}</h3>
+    ${architekt(o) ? `<section class="blok"><h3 class="etykieta"><span>Dostępy do modułów</span><span class="pill arch-pill">wszystkie</span></h3>
+      <div class="arch-moduly">${MODULY.map(m => `<div class="arch-m" style="--kol:${m.kol}"><span class="modul-kw"></span><span class="tr"><b>${esc(m.nazwa)}</b><small>${esc(m.adres)}${m.wkrotce ? ' · wkrótce' : ''}</small></span>${odznakaArch()}</div>`).join('')}
+        <div class="arch-m nastepne"><span class="modul-kw"></span><span class="tr"><b>Każdy następny moduł</b><small>od pierwszego dnia</small></span>${odznakaArch()}</div></div>
+    </section>` : `<section class="blok"><h3 class="etykieta"><span>Dostępy do modułów</span>${ileDost(d) ? `<span class="pill">${ileDost(d)} z ${MODULY.filter(m => !m.wkrotce && roleDla(o, m).length).length}</span>` : ''}</h3>
       ${MODULY.map(m => wierszModulu(m, d, { akcja: 'ed', zablokuj: zabl || S.zajety, osoba: o, zmienione })).join('')}
       ${!o.konto && ileDost(d) && !zabl ? `<div class="info">${ik('info')}<span>${T('Dostępy zadziałają, gdy osoba dostanie konto i PIN.')}</span></div>` : ''}
-    </section>
+    </section>`}
     <section class="blok"><h3 class="etykieta">Historia</h3>
       ${!hist ? '<span class="pod">Wczytuję…</span>' : hist.length ? `<div class="hist">${hist.map(w => `<div class="hist-w"><time>${dzienKr(w.kiedy)} ${godz(new Date(w.kiedy))}</time><span>${T(w.opis)}<small style="display:block;color:var(--tekst3)">${esc(w.kto_nazwa || '')}</small></span></div>`).join('')}</div>` : `<span class="pod">${T('Bez zmian od założenia.')}</span>`}
     </section>
@@ -1503,8 +1544,8 @@ function renderPrzejscie() {
 }
 function opcjeOsob(k, wyb) {
   const typ = k.modul === 'tablica' && k.rola === 'ekran' ? 'urzadzenie' : 'osoba';
-  const wszyscy = D.osoby.filter(o => o.typ === typ && o.status !== 'odeszla').sort((a, b) => pelne(a).localeCompare(pelne(b), 'pl'));
-  const kand = (k.kandydaci || []).map(id => PO_ID[id]).filter(Boolean);
+  const wszyscy = D.osoby.filter(o => o.typ === typ && o.status !== 'odeszla' && mozeZmieniac(o)).sort((a, b) => pelne(a).localeCompare(pelne(b), 'pl'));
+  const kand = (k.kandydaci || []).map(id => PO_ID[id]).filter(o => o && mozeZmieniac(o));
   const opt = o => `<option value="${o.id}" ${o.id === wyb ? 'selected' : ''}>${esc(pelne(o))} · ${esc(o.typ === 'osoba' ? ZESPOLY[o.zespol].nazwa : nazwaSt(o))}</option>`;
   return `<option value="">— wybierz osobę —</option>${kand.length ? `<optgroup label="Pasują">${kand.map(opt).join('')}</optgroup><optgroup label="Wszyscy">` : ''}${wszyscy.filter(o => !kand.includes(o)).map(opt).join('')}${kand.length ? '</optgroup>' : ''}`;
 }
@@ -1519,7 +1560,8 @@ function wierszStary(k) {
   const st = k.stan !== 'czeka' ? 'zatw' : k.pewnosc;
   const wyb = S.prz.wyb[kl] !== undefined ? S.prz.wyb[kl] : k.osoba;
   let akcje;
-  if (k.stan === 'zatwierdzone') akcje = `<span class="pill ok">${ik('ok', 'mala')} połączone</span><button class="drugi maly" data-a="prz-cofnij" data-k="${kl}">Cofnij</button>`;
+  if (k.stan === 'zatwierdzone' && !mozeZmieniac(PO_ID[k.osoba])) akcje = `<span class="pill ok">${ik('ok', 'mala')} połączone</span>${odznakaArch()}`;
+  else if (k.stan === 'zatwierdzone') akcje = `<span class="pill ok">${ik('ok', 'mala')} połączone</span><button class="drugi maly" data-a="prz-cofnij" data-k="${kl}">Cofnij</button>`;
   else if (k.stan === 'nie_przenos') akcje = `<span class="pill cicha">nie przenosimy</span><button class="drugi maly" data-a="prz-cofnij" data-k="${kl}">Cofnij</button>`;
   else akcje = `<select data-w="prz-osoba" data-k="${kl}" aria-label="Osoba dla ${esc(k.login)}">${opcjeOsob(k, wyb)}</select><button class="glowny maly" data-a="prz-zatw" data-k="${kl}" ${wyb ? '' : 'disabled'}>${ik('ok', 'mala')} Zatwierdź</button>${k.pewnosc === 'brak' || !wyb ? `<button class="drugi maly" data-a="prz-nie" data-k="${kl}">Nie przenoś</button>` : ''}`;
   const powod = S.prz.wyb[kl] && S.prz.wyb[kl] !== k.osoba ? `wybrane ręcznie: ${pelne(PO_ID[S.prz.wyb[kl]])} — stuknij „Zatwierdź”` : k.powod;
@@ -1551,12 +1593,18 @@ function renderModuly() {
       <div><h1 class="h1">Moduły i role</h1><p class="pod" style="margin-top:6px">${T('Każdy moduł ma swoje role — takie jak dziś w aplikacjach. Manager tylko je nadaje: osoba + moduł + rola. Stuknij liczbę, żeby zobaczyć te osoby.')}</p></div>
     </div>
     <div class="moduly-siatka">
+      <div class="karta arch-karta">
+        <div class="karta-tyt"><h2>${odznakaArch('duza')}</h2><span class="pill arch-pill">ponad modułami</span></div>
+        <p class="pod">${T('Najwyższy poziom w każdym module — w tych, które działają, i w każdym, który powstanie. Architekta nie nadaje się w aplikacji; jego kartę zmienia tylko Architekt.')}</p>
+        <div class="arch-kto">${D.osoby.filter(architekt).map(o => `<button class="arch-osoba" data-a="pokaz-osobe" data-id="${o.id}">${awatarOsoby(o, 'maly')}<b>${esc(pelne(o))}</b><small class="mono">${esc(o.login)}</small></button>`).join('') || '<span class="pod">—</span>'}</div>
+      </div>
       ${MODULY.map(m => `<div class="karta mod-k ${m.wkrotce ? 'wkrotce' : ''}" style="--kol:${m.kol}">
         <div class="karta-tyt"><h2>${esc(m.nazwa)}</h2><span class="pill ${m.wkrotce ? 'cicha' : 'ok'}">${m.wkrotce ? 'wkrótce' : 'działa'}</span></div>
         <p class="pod" style="margin:-6px 0 8px">${esc(m.adres)}</p>
         ${m.role.length ? `<table class="role-t"><tbody>
+          <tr class="arch-w"><td>${odznakaArch()}</td><td>${T('ponad wszystkimi rolami modułu')}</td><td>${D.osoby.filter(o => architekt(o) && aktywna(o)).length}</td></tr>
           ${m.role.map(r => `<tr><td>${esc(r.nazwa)}${r.wysoka ? ' <span class="pill" title="PIN 8 cyfr">8</span>' : ''}</td><td>${esc(r.opis || (m.wkrotce ? 'ustalimy przy budowie modułu' : ''))}</td><td>${m.wkrotce ? '' : `<button class="ile" data-a="filtr-mod" data-v="${m.id}:${r.id}" ${r.urzadzenie ? 'data-urz="1"' : ''}>${ile(m.id, r.id)}</button>`}</td></tr>`).join('')}
-        </tbody></table>` : `<p class="pod">${T('Role ustalimy przy budowie modułu.')}</p>`}
+        </tbody></table>` : `<table class="role-t"><tbody><tr class="arch-w"><td>${odznakaArch()}</td><td>${T('od pierwszego dnia modułu')}</td><td>${D.osoby.filter(o => architekt(o) && aktywna(o)).length}</td></tr></tbody></table><p class="pod" style="margin-top:6px">${T('Pozostałe role ustalimy przy budowie modułu.')}</p>`}
         ${m.id === 'tablica' ? `<p class="pod" style="margin-top:8px">${T(`Sekcje: ${D.sekcje.map(sekNazwa).join(' i ')}. Kokpit to konto urządzenia — nie osoba.`)}</p>` : ''}
       </div>`).join('')}
       <div class="karta">
@@ -1569,6 +1617,7 @@ function renderModuly() {
           <li>${T('PIN nie jest nigdzie zapisany — w bazie jest tylko jego skrót, liczony z tajnym kluczem.')}</li>
           <li>${T('Blokada działa od razu na nowym koncie i na połączonych starych loginach.')}</li>
           <li>${T('Nie da się zablokować siebie ani ostatniego kierownika.')}</li>
+          <li>${T('Architekt ma najwyższy poziom we wszystkich modułach; jego dane, dostępy, PIN i blokadę zmienia tylko Architekt.')}</li>
         </ul>
       </div>
     </div>`;
@@ -1745,7 +1794,7 @@ function renderMenu() {
   if (!S.menu || S.etap !== 'app') { if (m) m.remove(); return; }
   if (!m) { m = document.createElement('div'); m.id = 'menu'; m.className = 'menu'; m.setAttribute('role', 'menu'); document.body.appendChild(m); }
   const j = ja();
-  m.innerHTML = `<div class="m-k">${awatarOsoby(j)}<span><b>${esc(pelne(j))}</b><small>kierownik · ${esc(D.ja.stary_login ? `stary login ${D.ja.stary_login}` : j.login)}</small></span></div>
+  m.innerHTML = `<div class="m-k">${awatarOsoby(j)}<span><b>${esc(pelne(j))}</b><small>${jaArchitekt() ? '<span class="arch-t">architekt</span>' : 'kierownik'} · ${esc(D.ja.stary_login ? `stary login ${D.ja.stary_login}` : j.login)}</small></span></div>
     <div class="m-motyw">${przelacznikMotywu()}</div>
     <button class="m-p" data-a="pokaz-osobe" data-id="${j.id}">${ik('osoba')} Moja karta</button>
     <button class="m-p" data-a="odswiez">${ik('odswiez')} Odśwież dane</button>
