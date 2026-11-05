@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Manager">
 <meta name="robots" content="noindex, nofollow">
-<meta name="manager-wersja" content="2026-11-04 09:56 · 8544fd2">
+<meta name="manager-wersja" content="2026-11-04 20:43 · cc73023">
 <title>Manager · dysza.app</title>
 <link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="favicon.png">
 <style>
@@ -509,6 +509,8 @@ h2 .arch{margin-left:6px;position:relative;top:-2px}
 .role-t tr.arch-w td{color:var(--arch)}
 .arch-info,.arch-info span{color:var(--tekst)}
 .arch-info b{color:var(--arch)}
+/* kilka spisów jednej osoby (006) */
+.modul-wiele{margin:6px 0 0;font-size:12.5px;color:var(--tekst3)}
 
 </style>
 </head>
@@ -874,17 +876,19 @@ function opisPelny(m, v) {
   const x = ROLA[m] && ROLA[m][v.rola];
   let t = x ? x.nazwa : v.rola;
   if (MODUL[m] && MODUL[m].sekcje && v.sekcje && v.sekcje.length) t += ` (${v.sekcje.map(sekNazwa).join(', ')})`;
+  for (const r of v.dodatkowe || []) t += ` + ${ROLA[m] && ROLA[m][r] ? ROLA[m][r].nazwa : r}`;   // kilka spisów (006)
   return t;
 }
 function opisDost(m, v) {
   if (!v || !v.rola) return '';
   let t = rolaKrotko(m, v.rola);
   if (MODUL[m] && MODUL[m].sekcje && v.sekcje && v.sekcje.length && v.sekcje.length < D.sekcje.length) t += ' · ' + sekKrotko(v.sekcje);
+  for (const r of v.dodatkowe || []) t += ' + ' + rolaKrotko(m, r);
   return t;
 }
 const kopiaDost = d => {
   const w = {};
-  for (const [m, v] of Object.entries(d || {})) if (v && v.rola) w[m] = { rola: v.rola, sekcje: (v.sekcje || []).slice() };
+  for (const [m, v] of Object.entries(d || {})) if (v && v.rola) w[m] = { rola: v.rola, sekcje: (v.sekcje || []).slice(), dodatkowe: (v.dodatkowe || []).slice() };
   return w;
 };
 const statusTekst = o => (o.status === 'zablokowana' ? rz(o, 'zablokowany', 'zablokowana') : o.status === 'odeszla' ? rz(o, 'odszedł', 'odeszła') : '');
@@ -1228,7 +1232,7 @@ function pasujeZal(o) {
   if (f.modul !== 'wszystkie') {
     const [m, r] = f.modul.split(':');
     if (!o.dostepy || !o.dostepy[m]) return false;
-    if (r && o.dostepy[m].rola !== r) return false;
+    if (r && o.dostepy[m].rola !== r && !(o.dostepy[m].dodatkowe || []).includes(r)) return false;
   }
   if (f.szukaj) {
     const q = bezOgonkow(f.szukaj).trim();
@@ -1308,15 +1312,16 @@ function wierszModulu(m, d, pref) {
   const zm = pref.zmienione && pref.zmienione.has(m.id) ? 'zmieniony' : '';
   const r0 = wl && ROLA[m.id][v.rola];
   return `<div class="modul ${wl ? '' : 'wyl'} ${zm}" style="--kol:${m.kol}">
-    <div class="modul-g"><span class="modul-kw"></span><span class="modul-n"><b>${esc(m.nazwa)}</b><small>${esc(m.adres)}${wl ? ` · ${esc(r0 ? r0.opis || '' : '')}` : ' · brak dostępu'}</small></span>
+    <div class="modul-g"><span class="modul-kw"></span><span class="modul-n"><b>${esc(m.nazwa)}</b><small>${esc(m.adres)}${wl ? ` · ${esc((v.dodatkowe || []).length ? opisPelny(m.id, v) : r0 ? r0.opis || '' : '')}` : ' · brak dostępu'}</small></span>
       <button class="przel" role="switch" aria-checked="${wl}" data-a="${pref.akcja}-przel" data-m="${m.id}" ${pref.zablokuj ? 'disabled' : ''} aria-label="${esc(m.nazwa)}"></button></div>
-    <div class="modul-role">${role.map(r => `<button data-a="${pref.akcja}-rola" data-m="${m.id}" data-r="${r.id}" aria-pressed="${wl && v.rola === r.id}" ${pref.zablokuj ? 'disabled' : ''}>${esc(r.nazwa)}${r.wysoka ? ' <small class="osiem" title="PIN 8 cyfr">8</small>' : ''}</button>`).join('')}</div>
+    <div class="modul-role">${role.map(r => `<button data-a="${pref.akcja}-rola" data-m="${m.id}" data-r="${r.id}" aria-pressed="${wl && (v.rola === r.id || (v.dodatkowe || []).includes(r.id))}" ${pref.zablokuj ? 'disabled' : ''}>${esc(r.nazwa)}${r.wysoka ? ' <small class="osiem" title="PIN 8 cyfr">8</small>' : ''}</button>`).join('')}</div>
+    ${m.wiele_rol && wl ? `<p class="modul-wiele">${T(ROLA[m.id][v.rola] && ROLA[m.id][v.rola].wysoka ? `${ROLA[m.id][v.rola].nazwa} liczy wszystkie spisy.` : 'Można zaznaczyć kilka spisów — po zalogowaniu osoba wybierze, który liczy.')}</p>` : ''}
     ${m.sekcje && wl && v.rola !== 'kierownik' ? `<div class="modul-sek"><span>Sekcje:</span>${D.sekcje.map(s => `<button data-a="${pref.akcja}-sek" data-m="${m.id}" data-s="${s}" aria-pressed="${(v.sekcje || []).includes(s)}" ${pref.zablokuj ? 'disabled' : ''}>${esc(sekNazwa(s))}</button>`).join('')}</div>` : ''}
   </div>`;
 }
 function zmienioneModuly(o, d) {
   const z = new Set();
-  const norm = v => (v && v.rola ? JSON.stringify({ r: v.rola, s: (v.sekcje || []).slice().sort() }) : 'null');
+  const norm = v => (v && v.rola ? JSON.stringify({ r: v.rola, s: (v.sekcje || []).slice().sort(), d: (v.dodatkowe || []).slice().sort() }) : 'null');
   for (const m of MODULY) if (norm((o.dostepy || {})[m.id]) !== norm(d[m.id])) z.add(m.id);
   return z;
 }
@@ -1391,8 +1396,21 @@ function zmienDost(d, m, akcja, el, o) {
     }
   } else if (akcja === 'rola') {
     const r = el.dataset.r;
+    const zal = x => ROLA[m] && ROLA[m][x] && !ROLA[m][x].wysoka;   // rola załogi (nie szef/kierownik)
+    if (mod.wiele_rol && zal(r) && d[m] && zal(d[m].rola)) {      // kilka spisów jednej osoby (006)
+      const v = d[m]; const wyb = new Set([v.rola, ...(v.dodatkowe || [])]);
+      if (wyb.has(r)) {
+        if (wyb.size === 1) { toast('oczko', 'ZDZISŁAW PODPOWIADA', 'Choć jeden spis musi zostać — cały moduł wyłączysz przełącznikiem.'); return; }
+        wyb.delete(r);
+      } else wyb.add(r);
+      const kol = mod.role.map(x => x.id).filter(x => wyb.has(x));
+      v.rola = wyb.has(v.rola) ? v.rola : kol[0];
+      v.dodatkowe = kol.filter(x => x !== v.rola);
+      return;
+    }
     d[m] = d[m] || { sekcje: [] };
     d[m].rola = r;
+    if (mod.wiele_rol) d[m].dodatkowe = [];
     if (mod.sekcje) d[m].sekcje = r === 'kierownik' ? D.sekcje.slice() : (d[m].sekcje && d[m].sekcje.length ? d[m].sekcje : D.sekcje.slice());
   } else if (akcja === 'sek') {
     const s = el.dataset.s;
@@ -1587,7 +1605,7 @@ function grupaBrak(l) {
 
 /* ── MODUŁY ── */
 function renderModuly() {
-  const ile = (m, r) => D.osoby.filter(o => aktywna(o) && o.dostepy && o.dostepy[m] && o.dostepy[m].rola === r).length;
+  const ile = (m, r) => D.osoby.filter(o => aktywna(o) && o.dostepy && o.dostepy[m] && (o.dostepy[m].rola === r || (o.dostepy[m].dodatkowe || []).includes(r))).length;
   return `
     <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:14px">
       <div><h1 class="h1">Moduły i role</h1><p class="pod" style="margin-top:6px">${T('Każdy moduł ma swoje role — takie jak dziś w aplikacjach. Manager tylko je nadaje: osoba + moduł + rola. Stuknij liczbę, żeby zobaczyć te osoby.')}</p></div>
