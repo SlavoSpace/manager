@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Manager">
 <meta name="robots" content="noindex, nofollow">
-<meta name="manager-wersja" content="2026-11-04 20:43 · cc73023">
+<meta name="manager-wersja" content="2026-11-05 04:20 · f125c6b">
 <title>Manager · dysza.app</title>
 <link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="favicon.png">
 <style>
@@ -1315,7 +1315,7 @@ function wierszModulu(m, d, pref) {
     <div class="modul-g"><span class="modul-kw"></span><span class="modul-n"><b>${esc(m.nazwa)}</b><small>${esc(m.adres)}${wl ? ` · ${esc((v.dodatkowe || []).length ? opisPelny(m.id, v) : r0 ? r0.opis || '' : '')}` : ' · brak dostępu'}</small></span>
       <button class="przel" role="switch" aria-checked="${wl}" data-a="${pref.akcja}-przel" data-m="${m.id}" ${pref.zablokuj ? 'disabled' : ''} aria-label="${esc(m.nazwa)}"></button></div>
     <div class="modul-role">${role.map(r => `<button data-a="${pref.akcja}-rola" data-m="${m.id}" data-r="${r.id}" aria-pressed="${wl && (v.rola === r.id || (v.dodatkowe || []).includes(r.id))}" ${pref.zablokuj ? 'disabled' : ''}>${esc(r.nazwa)}${r.wysoka ? ' <small class="osiem" title="PIN 8 cyfr">8</small>' : ''}</button>`).join('')}</div>
-    ${m.wiele_rol && wl ? `<p class="modul-wiele">${T(ROLA[m.id][v.rola] && ROLA[m.id][v.rola].wysoka ? `${ROLA[m.id][v.rola].nazwa} liczy wszystkie spisy.` : 'Można zaznaczyć kilka spisów — po zalogowaniu osoba wybierze, który liczy.')}</p>` : ''}
+    ${m.wiele_rol && wl ? `<p class="modul-wiele">${T(m.id !== 'magazyn' ? 'Można zaznaczyć kilka ról — osoba ma uprawnienia każdej z nich.' : ROLA[m.id][v.rola] && ROLA[m.id][v.rola].wysoka ? `${ROLA[m.id][v.rola].nazwa} liczy wszystkie spisy.` : 'Można zaznaczyć kilka spisów — po zalogowaniu osoba wybierze, który liczy.')}</p>` : ''}
     ${m.sekcje && wl && v.rola !== 'kierownik' ? `<div class="modul-sek"><span>Sekcje:</span>${D.sekcje.map(s => `<button data-a="${pref.akcja}-sek" data-m="${m.id}" data-s="${s}" aria-pressed="${(v.sekcje || []).includes(s)}" ${pref.zablokuj ? 'disabled' : ''}>${esc(sekNazwa(s))}</button>`).join('')}</div>` : ''}
   </div>`;
 }
@@ -1400,7 +1400,7 @@ function zmienDost(d, m, akcja, el, o) {
     if (mod.wiele_rol && zal(r) && d[m] && zal(d[m].rola)) {      // kilka spisów jednej osoby (006)
       const v = d[m]; const wyb = new Set([v.rola, ...(v.dodatkowe || [])]);
       if (wyb.has(r)) {
-        if (wyb.size === 1) { toast('oczko', 'ZDZISŁAW PODPOWIADA', 'Choć jeden spis musi zostać — cały moduł wyłączysz przełącznikiem.'); return; }
+        if (wyb.size === 1) { toast('oczko', 'ZDZISŁAW PODPOWIADA', m === 'magazyn' ? 'Choć jeden spis musi zostać — cały moduł wyłączysz przełącznikiem.' : 'Choć jedna rola musi zostać — cały moduł wyłączysz przełącznikiem.'); return; }
         wyb.delete(r);
       } else wyb.add(r);
       const kol = mod.role.map(x => x.id).filter(x => wyb.has(x));
