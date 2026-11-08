@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Manager">
 <meta name="robots" content="noindex, nofollow">
-<meta name="manager-wersja" content="2026-11-05 13:18 · 9a7f69f">
+<meta name="manager-wersja" content="2026-11-08 13:22 · telefon">
 <title>Manager</title>
 <link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="favicon.png">
 <style>
@@ -236,6 +236,7 @@ button.liczba:active{filter:brightness(.95)}
 .osoba-gora{display:flex;align-items:center;gap:14px}
 .osoba-gora h2{font-size:22px;font-weight:800;line-height:1.15}
 .osoba-gora p{font-size:13.5px;color:var(--tekst2);margin-top:3px}
+.osoba-gora a.tel{color:inherit;text-decoration:none;border-bottom:1px dotted currentColor;white-space:nowrap}
 .osoba-akcje{display:flex;flex-wrap:wrap;gap:8px}
 .blok{border-top:1px solid var(--linia);padding-top:14px;display:flex;flex-direction:column;gap:10px}
 .blok h3{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -552,7 +553,7 @@ function pisz(k, v) { try { if (v == null) localStorage.removeItem(k); else loca
 /* ── komunikaty błędów z bazy (kod z wyjątku funkcji manager_*) ── */
 var POLA = {
   imie: 'imię', nazwisko: 'nazwisko', kafelek: 'imię na kafelku', zespol: 'zespół', stanowisko: 'stanowisko', jezyk: 'język',
-  notatka: 'notatka', login: 'login', sekcje: 'sekcje', modul: 'moduł', rola: 'rola', typ: 'rodzaj konta', stan: 'decyzja', pin: 'PIN'
+  notatka: 'notatka', telefon: 'telefon', login: 'login', sekcje: 'sekcje', modul: 'moduł', rola: 'rola', typ: 'rodzaj konta', stan: 'decyzja', pin: 'PIN'
 };
 var BLEDY = {
   BRAK_DOSTEPU: 'Managerem zarządza tylko kierownik.',
@@ -582,9 +583,30 @@ function tekstBledu(e) {
     if (pole === 'imie') return 'Imię: 1–40 znaków, zaczyna się literą (alfabet łaciński).';
     if (pole === 'nazwisko') return 'Wpisz nazwisko (alfabet łaciński).';
     if (pole === 'login') return 'Login: litery i cyfry, zaczyna się wielką literą (np. AnnaNo).';
+    if (pole === 'telefon') return BLAD_TEL;
     return 'Sprawdź pole: ' + (POLA[pole] || pole || 'dane') + '.';
   }
   return BLEDY[kod] || m || 'Coś poszło nie tak.';
+}
+
+/* ── telefon: w bazie +48600123456 (manager_telefon), w formularzu i na ekranie z odstępami ── */
+var BLAD_TEL = 'Telefon: 9 cyfr (np. 600 123 456) albo z kierunkowym (np. +380 50 123 45 67).';
+function telNorm(t) {   // to samo co manager_telefon w bazie; null = zły numer
+  var s = String(t || '').replace(/[\s().\/-]/g, '');
+  if (!s) return '';
+  if (s.slice(0, 2) === '00') s = '+' + s.slice(2);
+  if (/^[1-9]\d{8}$/.test(s)) s = '+48' + s;
+  else if (/^0\d{9}$/.test(s)) s = '+38' + s;
+  else if (/^(48|380)\d{9}$/.test(s)) s = '+' + s;
+  if (/^\+48/.test(s)) return /^\+48\d{9}$/.test(s) ? s : null;
+  if (/^\+380/.test(s)) return /^\+380\d{9}$/.test(s) ? s : null;
+  return /^\+[1-9]\d{7,14}$/.test(s) ? s : null;
+}
+function telTxt(t) {   // +48600123456 → +48 600 123 456; +380501234567 → +380 50 123 45 67
+  var s = String(t || ''), m;
+  if ((m = s.match(/^\+48(\d{3})(\d{3})(\d{3})$/))) return '+48 ' + m[1] + ' ' + m[2] + ' ' + m[3];
+  if ((m = s.match(/^\+380(\d{2})(\d{3})(\d{2})(\d{2})$/))) return '+380 ' + m[1] + ' ' + m[2] + ' ' + m[3] + ' ' + m[4];
+  return s;
 }
 
 /* ── połączenie (wzór: Raporty) ── */
@@ -1340,7 +1362,7 @@ function renderOsoba(o) {
   return `<div class="osoba">
     <div class="osoba-gora">
       ${awatarOsoby(o, 'duzy')}
-      <div style="flex:1;min-width:0"><h2>${esc(pelne(o))}${architekt(o) ? ` ${odznakaArch('duza')}` : ''}</h2><p>${esc(stIZesp(o) + tezW(o))}${o.typ === 'osoba' ? ` · ${o.jezyk === 'ua' ? 'język UA' : 'język PL'}` : ''}${o.kafelek && o.kafelek !== o.imie && !sys ? ` · na kafelku: ${esc(o.kafelek)}` : ''}</p></div>
+      <div style="flex:1;min-width:0"><h2>${esc(pelne(o))}${architekt(o) ? ` ${odznakaArch('duza')}` : ''}</h2><p>${esc(stIZesp(o) + tezW(o))}${o.typ === 'osoba' ? ` · ${o.jezyk === 'ua' ? 'język UA' : 'język PL'}` : ''}${o.kafelek && o.kafelek !== o.imie && !sys ? ` · na kafelku: ${esc(o.kafelek)}` : ''}${o.typ === 'osoba' && o.telefon ? ` · <a class="tel" href="tel:${esc(o.telefon)}">${esc(telTxt(o.telefon))}</a>` : ''}</p></div>
       ${zabl ? `<span class="pill bl">${statusTekst(o)}</span>` : o.konto ? `<span class="pill ok">aktywne konto</span>` : '<span class="pill cicha">bez konta</span>'}
     </div>
     ${!mozeZmieniac(o) ? '' : `<div class="osoba-akcje">
@@ -1712,7 +1734,7 @@ function oknoNowa(ok) {
       <div class="pole"><label class="etykieta" for="n-imie">${urz ? 'Nazwa' : 'Imię'}</label><input id="n-imie" data-w="n-imie" value="${esc(f.imie)}" autocomplete="off" ${urz ? 'placeholder="np. Kokpit"' : ''}>${ok.bledy.imie ? `<span class="blad">${esc(ok.bledy.imie)}</span>` : ''}</div>
       <div class="pole"><label class="etykieta" for="n-nazw">${urz ? 'Miejsce' : 'Nazwisko'}</label><input id="n-nazw" data-w="n-nazw" value="${esc(f.nazwisko)}" autocomplete="off" ${urz ? 'placeholder="np. Fabryka"' : ''}>${ok.bledy.nazwisko ? `<span class="blad">${esc(ok.bledy.nazwisko)}</span>` : ''}</div>
     </div>
-    ${urz ? '' : `<div class="pole"><label class="etykieta" for="n-kaf">Imię na kafelku — nieobowiązkowe</label><input id="n-kaf" data-w="n-kaf" value="${esc(f.kafelek)}" autocomplete="off" placeholder="np. Kasia — tak ją wita ZDZISŁAW"><span class="pomoc">${T('Imię pełne idzie do loginu; to krótsze widać na kafelku i w powitaniach.')}</span></div>
+    ${urz ? '' : `<div class="dwie"><div class="pole"><label class="etykieta" for="n-kaf">Imię na kafelku — nieobowiązkowe</label><input id="n-kaf" data-w="n-kaf" value="${esc(f.kafelek)}" autocomplete="off" placeholder="np. Kasia — tak ją wita ZDZISŁAW"><span class="pomoc">${T('Imię pełne idzie do loginu; to krótsze widać na kafelku i w powitaniach.')}</span></div><div class="pole"><label class="etykieta" for="n-tel">Telefon</label><input id="n-tel" data-w="n-tel" type="tel" inputmode="tel" autocomplete="off" value="${esc(f.telefon)}" placeholder="np. 600 123 456">${ok.bledy.telefon ? `<span class="blad">${esc(ok.bledy.telefon)}</span>` : `<span class="pomoc">${T('Do kontaktu w sprawie zmian — w team.dysza.app widzi go HR.')}</span>`}</div></div>
     <div class="pole"><span class="etykieta">Stanowisko — podpowiada zespół i dostępy</span>
       <div class="wybor-st">${D.stanowiska.map(s => `<button data-a="n-st" data-v="${s.id}" aria-pressed="${f.stanowisko === s.id}" style="--kol:${ZESPOLY[s.zespol].kol}"><i></i>${esc(s.nazwa)}</button>`).join('')}</div></div>`}
     <div class="dwie">
@@ -1770,7 +1792,7 @@ function oknoDane(ok) {
   return `<div class="okno"><div class="okno-g"><h2>${sys ? 'Notatka' : 'Dane'} — ${esc(pelne(o))}</h2><button class="zamknij" data-a="zamknij" aria-label="Zamknij">${ik('x')}</button></div>
   <div class="okno-t">
     ${sys ? '' : `<div class="dwie"><div class="pole"><label class="etykieta" for="d-imie">${urz ? 'Nazwa' : 'Imię'}</label><input id="d-imie" data-w="d-imie" value="${esc(f.imie)}"></div><div class="pole"><label class="etykieta" for="d-nazw">${urz ? 'Miejsce' : 'Nazwisko'}</label><input id="d-nazw" data-w="d-nazw" value="${esc(f.nazwisko)}"></div></div>
-    ${urz ? '' : `<div class="pole"><label class="etykieta" for="d-kaf">Imię na kafelku — nieobowiązkowe</label><input id="d-kaf" data-w="d-kaf" value="${esc(f.kafelek)}" placeholder="np. Kasia"></div>`}
+    ${urz ? '' : sys ? `<div class="pole"><label class="etykieta" for="d-kaf">Imię na kafelku — nieobowiązkowe</label><input id="d-kaf" data-w="d-kaf" value="${esc(f.kafelek)}" placeholder="np. Kasia"></div>` : `<div class="dwie"><div class="pole"><label class="etykieta" for="d-kaf">Imię na kafelku — nieobowiązkowe</label><input id="d-kaf" data-w="d-kaf" value="${esc(f.kafelek)}" placeholder="np. Kasia"></div><div class="pole"><label class="etykieta" for="d-tel">Telefon</label><input id="d-tel" data-w="d-tel" type="tel" inputmode="tel" autocomplete="off" value="${esc(f.telefon)}" placeholder="np. 600 123 456"></div></div>`}
     <div class="pole"><span class="etykieta">Zespół</span><div class="seg">${(urz ? ['F', 'R'] : ['F', 'R', 'T', 'M', 'B']).map(z => `<button data-a="d-zesp" data-v="${z}" aria-pressed="${f.zespol === z}">${ZESPOLY[z].nazwa}</button>`).join('')}</div></div>
     ${urz ? '' : polePracujeTez(f)}
     ${urz ? '' : `<div class="dwie"><div class="pole"><label class="etykieta" for="d-st">Stanowisko</label><select id="d-st" data-w="d-st"><option value="">—</option>${D.stanowiska.map(s => `<option value="${s.id}" ${f.stanowisko === s.id ? 'selected' : ''}>${esc(s.nazwa)}</option>`).join('')}</select></div>
@@ -2055,7 +2077,7 @@ function otworzNowa(typ) {
   S.okno = {
     rodzaj: 'nowa', bledy: {}, blad: '',
     f: {
-      typ, imie: typ === 'urzadzenie' ? 'Kokpit' : '', nazwisko: '', kafelek: '', stanowisko: st, dodatkowe: [],
+      typ, imie: typ === 'urzadzenie' ? 'Kokpit' : '', nazwisko: '', kafelek: '', telefon: '', stanowisko: st, dodatkowe: [],
       zespol: pre ? pre.zespol : 'F', jezyk: 'pl', konto: pre ? pre.konto : true, login: '', loginRecz: false,
       dostepy: pre ? kopiaDost(pre.dostepy) : { tablica: { rola: 'ekran', sekcje: D.sekcje.includes('FABRYKA') ? ['FABRYKA'] : D.sekcje.slice(0, 1) } },
     },
@@ -2082,6 +2104,7 @@ function bladPola(e) {
   if (m === 'LOGIN_ZAJETY' || m === 'ZLA_WARTOSC:login') return ['login', tekstBledu(e)];
   if (m === 'ZLA_WARTOSC:imie') return ['imie', tekstBledu(e)];
   if (m === 'ZLA_WARTOSC:nazwisko') return ['nazwisko', tekstBledu(e)];
+  if (m === 'ZLA_WARTOSC:telefon') return ['telefon', tekstBledu(e)];
   return null;
 }
 function drukuj(karty) {
@@ -2253,7 +2276,7 @@ const AKCJE = {
   /* dane osoby */
   'edytuj-dane': el => {
     const o = PO_ID[el.dataset.id];
-    S.okno = { rodzaj: 'dane', id: o.id, blad: '', f: { imie: o.imie, nazwisko: o.nazwisko, kafelek: o.kafelek || '', zespol: o.zespol, dodatkowe: dodZesp(o), stanowisko: o.stanowisko || '', jezyk: o.jezyk, notatka: o.notatka || '', login: o.login }, wroc: S.okno && S.okno.rodzaj === 'osoba' ? S.okno : null };
+    S.okno = { rodzaj: 'dane', id: o.id, blad: '', f: { imie: o.imie, nazwisko: o.nazwisko, kafelek: o.kafelek || '', telefon: telTxt(o.telefon || ''), zespol: o.zespol, dodatkowe: dodZesp(o), stanowisko: o.stanowisko || '', jezyk: o.jezyk, notatka: o.notatka || '', login: o.login }, wroc: S.okno && S.okno.rodzaj === 'osoba' ? S.okno : null };
     render();
   },
   'd-zesp': el => { ustawZespol(S.okno.f, el.dataset.v); render(); },
@@ -2269,8 +2292,9 @@ const AKCJE = {
     if (o.typ === 'system') p.notatka = f.notatka;
     else {
       if (!f.imie.trim() || !f.nazwisko.trim()) { ok.blad = 'Imię i nazwisko nie mogą być puste.'; render(); potrzasnij(); return; }
+      if (o.typ === 'osoba' && telNorm(f.telefon) === null) { ok.blad = BLAD_TEL; render(); potrzasnij(); return; }
       Object.assign(p, { imie: f.imie, nazwisko: f.nazwisko, zespol: f.zespol, notatka: f.notatka });
-      if (o.typ === 'osoba') Object.assign(p, { kafelek: f.kafelek, stanowisko: f.stanowisko || '', jezyk: f.jezyk, zespoly_dodatkowe: (f.dodatkowe || []).filter(z => z !== f.zespol) });
+      if (o.typ === 'osoba') Object.assign(p, { kafelek: f.kafelek, telefon: telNorm(f.telefon) || '', stanowisko: f.stanowisko || '', jezyk: f.jezyk, zespoly_dodatkowe: (f.dodatkowe || []).filter(z => z !== f.zespol) });
       if (!o.konto && f.login.trim() && f.login.trim() !== o.login) p.login = f.login.trim();
     }
     const r = await wykonaj(() => API.zapiszOsobe(p), true);
@@ -2295,12 +2319,13 @@ const AKCJE = {
     const urz = f.typ === 'urzadzenie';
     if (!f.imie.trim()) b.imie = urz ? 'Wpisz nazwę.' : 'Wpisz imię.';
     if (!f.nazwisko.trim()) b.nazwisko = urz ? 'Wpisz miejsce.' : 'Wpisz nazwisko.';
+    if (!urz && telNorm(f.telefon) === null) b.telefon = BLAD_TEL;
     if (f.loginRecz && f.login && !/^[A-Z][A-Za-z0-9]{2,29}$/.test(f.login)) b.login = 'Login: litery i cyfry, zaczyna się wielką literą (np. AnnaNo).';
     ok.bledy = b; ok.blad = '';
     if (f.konto && !ileDost(f.dostepy)) ok.blad = 'Konto bez żadnego dostępu nic nie otworzy — włącz choć jeden moduł albo wybierz „Tylko w kartotece”.';
     if (Object.keys(b).length || ok.blad) { render(); potrzasnij(); return; }
     const p = { typ: f.typ, imie: f.imie, nazwisko: f.nazwisko, zespol: f.zespol, dostepy: f.dostepy };
-    if (!urz) Object.assign(p, { kafelek: f.kafelek, stanowisko: f.stanowisko || '', jezyk: f.jezyk, zespoly_dodatkowe: (f.dodatkowe || []).filter(z => z !== f.zespol) });
+    if (!urz) Object.assign(p, { kafelek: f.kafelek, telefon: telNorm(f.telefon) || '', stanowisko: f.stanowisko || '', jezyk: f.jezyk, zespoly_dodatkowe: (f.dodatkowe || []).filter(z => z !== f.zespol) });
     if (f.loginRecz && f.login) p.login = f.login;
     S.zajety = true; render();
     let o;
@@ -2440,9 +2465,11 @@ document.addEventListener('input', e => {
   else if (w === 'n-imie' || w === 'n-nazw') { S.okno.f[w === 'n-imie' ? 'imie' : 'nazwisko'] = el.value; podpowiedzLogin(); }
   else if (w === 'n-login') { S.okno.f.login = el.value.trim(); S.okno.f.loginRecz = el.value.trim() !== ''; if (!S.okno.f.loginRecz) podpowiedzLogin(); }
   else if (w === 'n-kaf') S.okno.f.kafelek = el.value;
+  else if (w === 'n-tel') S.okno.f.telefon = el.value;
   else if (w === 'd-imie') S.okno.f.imie = el.value;
   else if (w === 'd-nazw') S.okno.f.nazwisko = el.value;
   else if (w === 'd-kaf') S.okno.f.kafelek = el.value;
+  else if (w === 'd-tel') S.okno.f.telefon = el.value;
   else if (w === 'd-not') S.okno.f.notatka = el.value;
   else if (w === 'd-login') S.okno.f.login = el.value;
 });
