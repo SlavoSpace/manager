@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Manager">
 <meta name="robots" content="noindex, nofollow">
-<meta name="manager-wersja" content="2026-11-09 18:50 · nazwy stanowisk">
+<meta name="manager-wersja" content="2026-11-09 · tylko dostęp">
 <title>Manager</title>
 <link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="favicon.png">
 <style>
@@ -475,6 +475,7 @@ button.liczba:active{filter:brightness(.95)}
 .okno.statyczne{animation:none}
 @media (max-width:520px){.lista-gora .plikz{display:none}}
 /* „pracuje też w” — zespoły dodatkowe (004) */
+.seg.rowno>button{flex:1 1 0;justify-content:center;text-align:center}
 .zesp-dod{display:flex;gap:6px;flex-wrap:wrap}
 .zesp-dod button{--kol:var(--tekst3);display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 13px;border-radius:9px;border:1px solid var(--ramka2);font-size:13.5px;font-weight:700;color:var(--tekst2);background:var(--pow)}
 .zesp-dod button::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--kol);flex:0 0 auto}
@@ -870,18 +871,19 @@ const urzadzenia = () => D.osoby.filter(o => o.typ !== 'osoba');
 const pelne = o => (o ? (o.typ === 'system' ? o.kafelek || o.imie : `${o.imie} ${o.nazwisko}`.trim()) : '');
 const imieK = o => (o ? o.kafelek || o.imie : '');
 const aktywna = o => o.status === 'aktywna';
-const nazwaSt = o => (o.typ === 'urzadzenie' ? 'Konto urządzenia' : o.typ === 'system' ? 'Konto systemowe' : STANOWISKA[o.stanowisko] ? STANOWISKA[o.stanowisko].nazwa : '');
+const nazwaSt = o => (o.typ === 'urzadzenie' ? 'Konto urządzenia' : o.typ === 'system' ? 'Konto systemowe' : '');
+// manager nadaje tylko dostęp: osoba bez stanowiska i zespołu (role na zmianie i miejsca pracy są w team.dysza.app)
 const stIZesp = o => {
+  if (o.typ === 'osoba') return '';
   const n = nazwaSt(o);
-  if (o.typ !== 'osoba') return o.typ === 'urzadzenie' ? `${n} · ${o.nazwisko || ''}`.replace(/ · $/, '') : n;
-  const z = ZESPOLY[o.zespol] ? ZESPOLY[o.zespol].nazwa : '';
-  return !n ? z : n.includes(z) ? n : `${n} · ${z}`;
+  return o.typ === 'urzadzenie' ? `${n} · ${o.nazwisko || ''}`.replace(/ · $/, '') : n;
 };
-const kolZesp = o => (ZESPOLY[o.zespol] || ZESPOLY.B).kol;
+const KOL_OSOBY = 'var(--zB)';
+const kolZesp = o => KOL_OSOBY;
 /* zespół główny + „pracuje też w” (zespoly_dodatkowe, migracja 004) */
 const KOL_ZESP = ['F', 'R', 'T', 'M', 'B'];
 const dodZesp = o => (o.typ === 'osoba' ? (o.zespoly_dodatkowe || []).filter(z => ZESPOLY[z] && z !== o.zespol) : []);
-const tezW = o => { const d = dodZesp(o); return d.length ? ` · też ${d.map(z => ZESPOLY[z].nazwa).join(', ')}` : ''; };
+const tezW = o => '';
 const wZespole = (o, z) => o.zespol === z || dodZesp(o).includes(z);
 const dostAkt = o => Object.entries(o.dostepy || {}).filter(([m, v]) => v && v.rola && MODUL[m] && !MODUL[m].wkrotce);
 const ileDost = d => Object.keys(d || {}).filter(m => d[m] && d[m].rola && MODUL[m] && !MODUL[m].wkrotce).length;
@@ -1017,7 +1019,7 @@ function renderPoza() {
         <div>
           <span class="etykieta">Kto się loguje?</span>
           <div class="kafelki">
-            ${zap.map(o => `<button class="kafel" data-a="kafel" data-login="${esc(o.login)}"><span class="awatar" style="--kol:${(ZESPOLY[o.zespol] || ZESPOLY.B).kol}">${esc((o.imie || o.login)[0])}</span><span class="kafel-imie">${esc(o.imie || o.login)}</span><span class="kafel-rola mono">${esc(o.login)}</span></button>`).join('')}
+            ${zap.map(o => `<button class="kafel" data-a="kafel" data-login="${esc(o.login)}"><span class="awatar" style="--kol:${KOL_OSOBY}">${esc((o.imie || o.login)[0])}</span><span class="kafel-imie">${esc(o.imie || o.login)}</span><span class="kafel-rola mono">${esc(o.login)}</span></button>`).join('')}
             <button class="kafel kafel-inna" data-a="inna">+ Inna osoba</button>
           </div>
         </div>
@@ -1054,7 +1056,7 @@ function renderPoza() {
     srodek = `
       <div class="pin-uklad">
         <div class="pin ${S.wysyla ? 'wysyla' : ''}">
-          <span class="awatar duzy" style="--kol:${(ZESPOLY[o.zespol] || ZESPOLY.B).kol}">${esc((o.imie || o.login)[0].toUpperCase())}</span>
+          <span class="awatar duzy" style="--kol:${KOL_OSOBY}">${esc((o.imie || o.login)[0].toUpperCase())}</span>
           <div class="pin-imie">${esc(o.imie || o.login)}</div>
           <div class="pin-pod">${o.imie && o.imie !== o.login ? `<span class="mono">${esc(o.login)}</span> · ` : ''}Wpisz PIN · Введіть PIN</div>
           <div class="kropki" id="kropki" aria-live="polite" aria-label="Wpisano ${S.pin.length} cyfr">${Array.from({ length: Math.min(dl, 8) }, (_, i) => `<span class="${i < S.pin.length ? 'p' : ''}"></span>`).join('')}</div>
@@ -1169,7 +1171,6 @@ function renderPulpit() {
   const os = osoby().filter(o => o.status !== 'odeszla');
   const naMod = m => D.osoby.filter(o => aktywna(o) && o.dostepy && o.dostepy[m]).length;
   const max = Math.max(...MODULY.filter(m => !m.wkrotce).map(m => naMod(m.id)), 1);
-  const zesp = KOL_ZESP.map(z => [z, os.filter(o => o.zespol === z).length, os.filter(o => o.zespol !== z && dodZesp(o).includes(z)).length]);
   const j = ja();
   const logowania = D.dziennik.filter(x => x.rodzaj === 'logowanie' && Date.now() - new Date(x.kiedy) < 864e5);
   const rzeczy = [];
@@ -1215,7 +1216,7 @@ function renderPulpit() {
             <button class="liczba" data-a="filtr-zal" data-stan="bez"><b>${L.bez}</b><span>bez konta</span></button>
             <button class="liczba" data-a="filtr-zal" data-stan="zablokowani"><b>${L.zabl}</b><span>zablokowane</span></button>
           </div>
-          <div class="zespoly">${zesp.map(([z, n, d]) => `<button class="mb" style="--kol:${ZESPOLY[z].kol}" data-a="filtr-zal" data-zesp="${z}" title="${n} w zespole${d ? ` i ${d} — pracuje tu też` : ''}">${ZESPOLY[z].nazwa} <b>${n}</b>${d ? `<small class="tez">+${d} też</small>` : ''}</button>`).join('')}<button class="mb" style="--kol:var(--tekst3)" data-a="filtr-zal" data-stan="urzadzenia">urządzenia i system <b>${L.urz}</b></button></div>
+          <div class="zespoly"><button class="mb" style="--kol:var(--tekst3)" data-a="filtr-zal" data-stan="urzadzenia">urządzenia i system <b>${L.urz}</b></button></div>
         </div>
         <div class="karta">
           <div class="karta-tyt"><h2>Kto ma dostęp</h2><button class="link" data-a="ekran" data-v="moduly">Moduły i role ${ik('dalej', 'mala')}</button></div>
@@ -1245,7 +1246,6 @@ function pasujeZal(o) {
   else if (urzS) return false;
   if (f.stan === 'odeszli') { if (o.status !== 'odeszla') return false; }
   else if (o.status === 'odeszla' && f.stan !== 'urzadzenia') return false;
-  if (f.zesp !== 'wszyscy' && !wZespole(o, f.zesp)) return false;
   if (f.stan === 'konto' && !(o.konto && aktywna(o))) return false;
   if (f.stan === 'bez' && o.konto) return false;
   if (f.stan === 'zablokowani' && o.status !== 'zablokowana') return false;
@@ -1258,7 +1258,7 @@ function pasujeZal(o) {
   }
   if (f.szukaj) {
     const q = bezOgonkow(f.szukaj).trim();
-    const w = bezOgonkow(`${o.imie} ${o.nazwisko} ${o.kafelek || ''} ${o.login || ''} ${(o.stare || []).map(x => x.login).join(' ')} ${nazwaSt(o)} ${ZESPOLY[o.zespol] ? ZESPOLY[o.zespol].nazwa : ''} ${dodZesp(o).map(z => ZESPOLY[z].nazwa).join(' ')}`);
+    const w = bezOgonkow(`${o.imie} ${o.nazwisko} ${o.kafelek || ''} ${o.login || ''} ${(o.stare || []).map(x => x.login).join(' ')} ${nazwaSt(o)}`);
     if (!q.split(/\s+/).every(cz => w.includes(cz))) return false;
   }
   return true;
@@ -1280,17 +1280,16 @@ function wierszOsoby(o) {
     ${awatarOsoby(o)}
     <span class="w-tr">
       <span class="w-imie">${esc(pelne(o))}<small class="mono">${esc(o.login)}</small></span>
-      <span class="w-meta">${esc(stIZesp(o) + tezW(o))}</span>
+      ${stIZesp(o) ? `<span class="w-meta">${esc(stIZesp(o))}</span>` : ''}
       ${architekt(o) ? `<span class="w-mod">${odznakaArch()}<span class="arch-pod">wszystkie moduły, obecne i przyszłe</span></span>` : mods.length ? `<span class="w-mod">${mods.map(([m, v]) => `<span class="mb" style="--kol:${MODUL[m].kol}">${esc(MODUL[m].nazwa.split(' ·')[0].replace(' Mocy', ''))} · <b>${esc(opisDost(m, v))}</b></span>`).join('')}</span>` : ''}
     </span>
     <span class="w-stan">${stan.join('')}</span>
   </button>`;
 }
 function renderListaZal() {
-  const zf = S.zal.zesp, glZ = o => (zf !== 'wszyscy' && o.zespol !== zf ? 1 : 0);
-  const lista = D.osoby.filter(pasujeZal).sort((a, b) => (a.typ === b.typ ? 0 : a.typ === 'osoba' ? -1 : 1) || glZ(a) - glZ(b) || a.imie.localeCompare(b.imie, 'pl') || a.nazwisko.localeCompare(b.nazwisko, 'pl'));
+  const lista = D.osoby.filter(pasujeZal).sort((a, b) => (a.typ === b.typ ? 0 : a.typ === 'osoba' ? -1 : 1) || a.imie.localeCompare(b.imie, 'pl') || a.nazwisko.localeCompare(b.nazwisko, 'pl'));
   const n = lista.length;
-  const licz = $('#licz-zal'); if (licz) licz.innerHTML = `<span>${n} ${odm(n, 'pozycja', 'pozycje', 'pozycji')}</span>${S.zal.szukaj || S.zal.zesp !== 'wszyscy' || S.zal.stan !== 'wszyscy' || S.zal.modul !== 'wszystkie' ? '<button class="link" data-a="filtry-zero" style="min-height:0">Wyczyść filtry</button>' : ''}`;
+  const licz = $('#licz-zal'); if (licz) licz.innerHTML = `<span>${n} ${odm(n, 'pozycja', 'pozycje', 'pozycji')}</span>${S.zal.szukaj || S.zal.stan !== 'wszyscy' || S.zal.modul !== 'wszystkie' ? '<button class="link" data-a="filtry-zero" style="min-height:0">Wyczyść filtry</button>' : ''}`;
   const el = $('#lista-zal');
   if (!el) return;
   el.innerHTML = n ? lista.map(wierszOsoby).join('') : `<div class="puste">${zdz('zebatki', '', 'ZDZISŁAW myśli')}<b>${D.osoby.length > 1 ? 'Nie znalazłem nikogo takiego.' : 'Kartoteka czeka na załogę.'}</b><span>${T('Sprawdź pisownię albo dodaj nową osobę.')}</span><button class="drugi" data-a="nowa-osoba">${ik('plus', 'mala')} Nowa osoba</button></div>`;
@@ -1308,7 +1307,6 @@ function renderZaloga() {
         <button class="glowny maly" data-a="nowa-osoba">${ik('plus')} Nowa osoba</button>
       </div>
       <div class="filtry">
-        <div class="seg" role="group" aria-label="Zespół">${[['wszyscy', 'Wszyscy'], ['F', 'Fabryka'], ['R', 'Restauracja'], ['T', 'Transport'], ['M', 'Magazyn'], ['B', 'Biuro']].map(([v, n]) => `<button data-a="f-zesp" data-v="${v}" aria-pressed="${f.zesp === v}">${n}</button>`).join('')}</div>
         <div class="seg" role="group" aria-label="Stan">${[['wszyscy', 'Każdy'], ['konto', 'Z kontem'], ['bez', 'Bez konta'], ['karta', 'Do karty'], ['pin', 'PIN'], ['zablokowani', 'Zablokowani'], ['odeszli', 'Odeszli'], ['urzadzenia', 'Urządzenia']].map(([v, n]) => `<button data-a="f-stan" data-v="${v}" aria-pressed="${f.stan === v}">${n}</button>`).join('')}</div>
         <div class="pole" style="flex:0 1 250px"><select data-w="f-modul" aria-label="Moduł i rola" style="min-height:42px;font-size:14px">${modOpcje.map(([v, n]) => `<option value="${v}" ${f.modul === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
       </div>
@@ -1362,7 +1360,7 @@ function renderOsoba(o) {
   return `<div class="osoba">
     <div class="osoba-gora">
       ${awatarOsoby(o, 'duzy')}
-      <div style="flex:1;min-width:0"><h2>${esc(pelne(o))}${architekt(o) ? ` ${odznakaArch('duza')}` : ''}</h2><p>${esc(stIZesp(o) + tezW(o))}${o.typ === 'osoba' ? ` · ${o.jezyk === 'ua' ? 'język UA' : 'język PL'}` : ''}${o.kafelek && o.kafelek !== o.imie && !sys ? ` · na kafelku: ${esc(o.kafelek)}` : ''}${o.typ === 'osoba' && o.telefon ? ` · <a class="tel" href="tel:${esc(o.telefon)}">${esc(telTxt(o.telefon))}</a>` : ''}</p></div>
+      <div style="flex:1;min-width:0"><h2>${esc(pelne(o))}${architekt(o) ? ` ${odznakaArch('duza')}` : ''}</h2><p>${[stIZesp(o) ? esc(stIZesp(o)) : '', o.typ === 'osoba' ? (o.jezyk === 'ua' ? 'język UA' : 'język PL') : '', o.kafelek && o.kafelek !== o.imie && !sys ? `na kafelku: ${esc(o.kafelek)}` : '', o.typ === 'osoba' && o.telefon ? `<a class="tel" href="tel:${esc(o.telefon)}">${esc(telTxt(o.telefon))}</a>` : ''].filter(Boolean).join(' · ')}</p></div>
       ${zabl ? `<span class="pill bl">${statusTekst(o)}</span>` : o.konto ? `<span class="pill ok">aktywne konto</span>` : '<span class="pill cicha">bez konta</span>'}
     </div>
     ${!mozeZmieniac(o) ? '' : `<div class="osoba-akcje">
@@ -1451,7 +1449,7 @@ function renderKarty() {
   const lista = kandydaciKart();
   const zazn = S.karty.zazn;
   for (const id of Array.from(zazn)) if (!lista.some(o => o.id === id)) zazn.delete(id);
-  const grupy = ['F', 'R', 'T', 'M', 'B'].map(z => [z, lista.filter(o => o.zespol === z)]).filter(([, l]) => l.length);
+  const grupy = lista.length ? [['', lista.slice().sort((a, b) => pelne(a).localeCompare(pelne(b), 'pl'))]] : [];
   const ark = S.karty.arkusz;
   const L = liczniki();
   const zKarta = osoby().filter(o => o.karta_kiedy).length;
@@ -1471,7 +1469,7 @@ function renderKarty() {
         </div>
       </div>
       <div class="do-wyd">
-        ${grupy.map(([z, l]) => `<div class="do-wyd-g">${ZESPOLY[z].nazwa} · ${l.length}</div>${l.map(o => `<label class="do-wyd-w"><input type="checkbox" data-w="karta-zazn" data-id="${o.id}" ${zazn.has(o.id) ? 'checked' : ''}><span class="awatar maly" style="--kol:${kolZesp(o)}">${esc(o.imie[0])}</span><span class="tr"><b>${esc(pelne(o))}</b><small><span class="mono">${esc(o.login)}</span> · ${esc(nazwaSt(o) || ZESPOLY[o.zespol].nazwa)}${(o.stare || []).length ? ` · dotąd ${esc(o.stare.map(s => s.login).join(', '))}` : ''}${o.karta_kiedy ? ` · karta ${dzienKr(o.karta_kiedy)}` : ''}${o.prosba_pin ? ' · prośba o nowy PIN' : ''}</small></span>${o.jezyk === 'ua' ? '<span class="pill">UA</span>' : ''}</label>`).join('')}`).join('')}
+        ${grupy.map(([z, l]) => `<div class="do-wyd-g">Do wydania · ${l.length}</div>${l.map(o => `<label class="do-wyd-w"><input type="checkbox" data-w="karta-zazn" data-id="${o.id}" ${zazn.has(o.id) ? 'checked' : ''}><span class="awatar maly" style="--kol:${kolZesp(o)}">${esc(o.imie[0])}</span><span class="tr"><b>${esc(pelne(o))}</b><small><span class="mono">${esc(o.login)}</span> ${dostAktSur(o).length ? ` · ${esc(dostAktSur(o).join(', '))}` : ''}${(o.stare || []).length ? ` · dotąd ${esc(o.stare.map(s => s.login).join(', '))}` : ''}${o.karta_kiedy ? ` · karta ${dzienKr(o.karta_kiedy)}` : ''}${o.prosba_pin ? ' · prośba o nowy PIN' : ''}</small></span>${o.jezyk === 'ua' ? '<span class="pill">UA</span>' : ''}</label>`).join('')}`).join('')}
         ${lista.length ? '' : `<div class="puste">${T(S.karty.wszyscy ? 'Nikt nie ma jeszcze dostępów do modułów.' : 'Nie ma kart do przygotowania. Karta powstaje dla osoby z dostępami — tu albo przez „Nowy PIN”.')}</div>`}
       </div>
     </div>
@@ -1586,7 +1584,7 @@ function opcjeOsob(k, wyb) {
   const typ = k.modul === 'tablica' && k.rola === 'ekran' ? 'urzadzenie' : 'osoba';
   const wszyscy = D.osoby.filter(o => o.typ === typ && o.status !== 'odeszla' && mozeZmieniac(o)).sort((a, b) => pelne(a).localeCompare(pelne(b), 'pl'));
   const kand = (k.kandydaci || []).map(id => PO_ID[id]).filter(o => o && mozeZmieniac(o));
-  const opt = o => `<option value="${o.id}" ${o.id === wyb ? 'selected' : ''}>${esc(pelne(o))} · ${esc(o.typ === 'osoba' ? ZESPOLY[o.zespol].nazwa : nazwaSt(o))}</option>`;
+  const opt = o => `<option value="${o.id}" ${o.id === wyb ? 'selected' : ''}>${esc(pelne(o))} · ${esc(o.typ === 'osoba' ? o.login : nazwaSt(o))}</option>`;
   return `<option value="">— wybierz osobę —</option>${kand.length ? `<optgroup label="Pasują">${kand.map(opt).join('')}</optgroup><optgroup label="Wszyscy">` : ''}${wszyscy.filter(o => !kand.includes(o)).map(opt).join('')}${kand.length ? '</optgroup>' : ''}`;
 }
 function rolaStarego(k) {
@@ -1614,7 +1612,7 @@ function wierszStary(k) {
 function grupaOsoby(o, l) {
   const st = l.some(k => k.stan === 'czeka' && k.pewnosc === 'sprawdz') ? 'sprawdz' : '';
   return `<div class="para ${st}">
-    <div class="para-g">${awatarOsoby(o)}<span class="tr"><b>${esc(pelne(o))}</b><small>${esc(stIZesp(o))} · nowy login: <span class="mono">${esc(o.login)}</span>${o.konto ? '' : ' (bez konta)'}</small></span></div>
+    <div class="para-g">${awatarOsoby(o)}<span class="tr"><b>${esc(pelne(o))}</b><small>${stIZesp(o) ? `${esc(stIZesp(o))} · ` : ''}nowy login: <span class="mono">${esc(o.login)}</span>${o.konto ? '' : ' (bez konta)'}</small></span></div>
     <div class="stare">${l.map(wierszStary).join('')}</div>
   </div>`;
 }
@@ -1735,13 +1733,7 @@ function oknoNowa(ok) {
       <div class="pole"><label class="etykieta" for="n-nazw">${urz ? 'Miejsce' : 'Nazwisko'}</label><input id="n-nazw" data-w="n-nazw" value="${esc(f.nazwisko)}" autocomplete="off" ${urz ? 'placeholder="np. Fabryka"' : ''}>${ok.bledy.nazwisko ? `<span class="blad">${esc(ok.bledy.nazwisko)}</span>` : ''}</div>
     </div>
     ${urz ? '' : `<div class="dwie"><div class="pole"><label class="etykieta" for="n-kaf">Imię na kafelku — nieobowiązkowe</label><input id="n-kaf" data-w="n-kaf" value="${esc(f.kafelek)}" autocomplete="off" placeholder="np. Kasia — tak ją wita ZDZISŁAW"><span class="pomoc">${T('Imię pełne idzie do loginu; to krótsze widać na kafelku i w powitaniach.')}</span></div><div class="pole"><label class="etykieta" for="n-tel">Telefon</label><input id="n-tel" data-w="n-tel" type="tel" inputmode="tel" autocomplete="off" value="${esc(f.telefon)}" placeholder="np. 600 123 456">${ok.bledy.telefon ? `<span class="blad">${esc(ok.bledy.telefon)}</span>` : `<span class="pomoc">${T('Do kontaktu w sprawie zmian — w team.dysza.app widzi go HR.')}</span>`}</div></div>
-    <div class="pole"><span class="etykieta">Stanowisko — podpowiada zespół i dostępy</span>
-      <div class="wybor-st">${D.stanowiska.map(s => `<button data-a="n-st" data-v="${s.id}" aria-pressed="${f.stanowisko === s.id}" style="--kol:${ZESPOLY[s.zespol].kol}"><i></i>${esc(s.nazwa)}</button>`).join('')}</div></div>`}
-    <div class="dwie">
-      <div class="pole"><span class="etykieta">Zespół</span><div class="seg">${(urz ? ['F', 'R'] : ['F', 'R', 'T', 'M', 'B']).map(z => `<button data-a="n-zesp" data-v="${z}" aria-pressed="${f.zespol === z}">${ZESPOLY[z].nazwa}</button>`).join('')}</div></div>
-      ${urz ? '' : `<div class="pole"><span class="etykieta">Język aplikacji</span><div class="seg"><button data-a="n-jez" data-v="pl" aria-pressed="${f.jezyk === 'pl'}">Polski</button><button data-a="n-jez" data-v="ua" aria-pressed="${f.jezyk === 'ua'}">Українська</button></div></div>`}
-    </div>
-    ${urz ? '' : polePracujeTez(f)}
+    <div class="pole"><span class="etykieta">Język aplikacji</span><div class="seg rowno"><button data-a="n-jez" data-v="pl" aria-pressed="${f.jezyk === 'pl'}">Polski</button><button data-a="n-jez" data-v="ua" aria-pressed="${f.jezyk === 'ua'}">Українська</button></div></div>`}
     <div class="dwie">
       <div class="pole"><label class="etykieta" for="n-login">Login</label><input id="n-login" class="mono" data-w="n-login" value="${esc(f.login)}" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="ułożę z ${urz ? 'nazwy i miejsca' : 'imienia i nazwiska'}">${ok.bledy.login ? `<span class="blad">${esc(ok.bledy.login)}</span>` : `<span class="pomoc">${T(f.loginRecz ? 'Wpisany ręcznie — zaczyna się wielką literą, bez polskich znaków.' : 'Pełne imię i dwie pierwsze litery nazwiska. Przy powtórce — kolejna litera.')}</span>`}</div>
       <div class="pole"><span class="etykieta">Konto — PIN ${dl} cyfr</span><div class="seg"><button data-a="n-konto" data-v="1" aria-pressed="${f.konto}">${ik('klucz', 'mala')} Konto i PIN teraz</button><button data-a="n-konto" data-v="0" aria-pressed="${!f.konto}">Tylko w kartotece</button></div>
@@ -1779,12 +1771,6 @@ function oknoBlokada(ok) {
   </div>
   <div class="okno-d"><button class="drugi" data-a="zamknij" ${S.zajety ? 'disabled' : ''}>Anuluj</button><button class="glowny czerwony" data-a="bl-tak" ${ok.powod && !S.zajety ? '' : 'disabled'}>${ik('blokada', 'mala')} ${S.zajety ? 'Blokuję…' : ok.drugi ? 'Na pewno? Stuknij jeszcze raz' : 'Zablokuj wszędzie'}</button></div></div>`;
 }
-function polePracujeTez(f) {
-  const d = f.dodatkowe || [];
-  return `<div class="pole"><span class="etykieta">Pracuje też w — nieobowiązkowe</span>
-    <div class="zesp-dod" role="group" aria-label="Pracuje też w">${KOL_ZESP.filter(z => z !== f.zespol).map(z => `<button data-a="zesp-dod" data-v="${z}" aria-pressed="${d.includes(z)}" style="--kol:${ZESPOLY[z].kol}">${ZESPOLY[z].nazwa}</button>`).join('')}</div>
-    <span class="pomoc">${T('Zaznacz, jeśli ta osoba bierze zmiany także w innym zespole — przyda się w harmonogramach.')}</span></div>`;
-}
 function oknoDane(ok) {
   const f = ok.f;
   const o = PO_ID[ok.id];
@@ -1793,10 +1779,7 @@ function oknoDane(ok) {
   <div class="okno-t">
     ${sys ? '' : `<div class="dwie"><div class="pole"><label class="etykieta" for="d-imie">${urz ? 'Nazwa' : 'Imię'}</label><input id="d-imie" data-w="d-imie" value="${esc(f.imie)}"></div><div class="pole"><label class="etykieta" for="d-nazw">${urz ? 'Miejsce' : 'Nazwisko'}</label><input id="d-nazw" data-w="d-nazw" value="${esc(f.nazwisko)}"></div></div>
     ${urz ? '' : sys ? `<div class="pole"><label class="etykieta" for="d-kaf">Imię na kafelku — nieobowiązkowe</label><input id="d-kaf" data-w="d-kaf" value="${esc(f.kafelek)}" placeholder="np. Kasia"></div>` : `<div class="dwie"><div class="pole"><label class="etykieta" for="d-kaf">Imię na kafelku — nieobowiązkowe</label><input id="d-kaf" data-w="d-kaf" value="${esc(f.kafelek)}" placeholder="np. Kasia"></div><div class="pole"><label class="etykieta" for="d-tel">Telefon</label><input id="d-tel" data-w="d-tel" type="tel" inputmode="tel" autocomplete="off" value="${esc(f.telefon)}" placeholder="np. 600 123 456"></div></div>`}
-    <div class="pole"><span class="etykieta">Zespół</span><div class="seg">${(urz ? ['F', 'R'] : ['F', 'R', 'T', 'M', 'B']).map(z => `<button data-a="d-zesp" data-v="${z}" aria-pressed="${f.zespol === z}">${ZESPOLY[z].nazwa}</button>`).join('')}</div></div>
-    ${urz ? '' : polePracujeTez(f)}
-    ${urz ? '' : `<div class="dwie"><div class="pole"><label class="etykieta" for="d-st">Stanowisko</label><select id="d-st" data-w="d-st"><option value="">—</option>${D.stanowiska.map(s => `<option value="${s.id}" ${f.stanowisko === s.id ? 'selected' : ''}>${esc(s.nazwa)}</option>`).join('')}</select></div>
-    <div class="pole"><span class="etykieta">Język aplikacji</span><div class="seg"><button data-a="d-jez" data-v="pl" aria-pressed="${f.jezyk === 'pl'}">Polski</button><button data-a="d-jez" data-v="ua" aria-pressed="${f.jezyk === 'ua'}">Українська</button></div></div></div>`}
+    ${urz ? '' : `<div class="pole"><span class="etykieta">Język aplikacji</span><div class="seg rowno"><button data-a="d-jez" data-v="pl" aria-pressed="${f.jezyk === 'pl'}">Polski</button><button data-a="d-jez" data-v="ua" aria-pressed="${f.jezyk === 'ua'}">Українська</button></div></div>`}
     ${o.konto ? '' : `<div class="pole"><label class="etykieta" for="d-login">Login</label><input id="d-login" class="mono" data-w="d-login" value="${esc(f.login)}" autocapitalize="off" autocorrect="off" spellcheck="false"><span class="pomoc">${T('Login zmienisz tylko do założenia konta. Potem zostaje na stałe.')}</span></div>`}`}
     <div class="pole"><label class="etykieta" for="d-not">Notatka — nieobowiązkowa</label><textarea id="d-not" data-w="d-not" rows="2" maxlength="300" style="padding:10px 14px;min-height:64px">${esc(f.notatka)}</textarea></div>
     ${ok.blad ? `<div class="info bl">${ik('info')}<span>${esc(ok.blad)}</span></div>` : ''}
@@ -1865,7 +1848,7 @@ function renderImport() {
   const tekst = wyn
     ? `Dodałem ${wyn.dodane} ${odm(wyn.dodane, 'osobę', 'osoby', 'osób')} do kartoteki.${wyn.pominiete.length ? ` ${wyn.pominiete.length} już ${odm(wyn.pominiete.length, 'była', 'były', 'było')}.` : ''} Teraz Przejście: połączę ich stare loginy z kartoteką i dołożę dostępy.`
     : !im.osoby.length ? 'Lista z pliku Z jest pusta — ZDZISŁAW jeszcze jej nie zapisał. Dodaj osoby ręcznie albo spróbuj później.'
-      : nowi.length ? `W pliku ${im.plik || 'Z'} ${jestSa(im.osoby.length)} ${im.osoby.length} ${odm(im.osoby.length, 'osoba', 'osoby', 'osób')}; w kartotece brakuje ${nowi.length}. Zaznacz, kogo dodać, i przypisz zespół. Zarządców i części Transportu nie ma w pliku — ich dodasz ręcznie.`
+      : nowi.length ? `W pliku ${im.plik || 'Z'} ${jestSa(im.osoby.length)} ${im.osoby.length} ${odm(im.osoby.length, 'osoba', 'osoby', 'osób')}; w kartotece brakuje ${nowi.length}. Zaznacz, kogo dodać. Zarządców i części Transportu nie ma w pliku — ich dodasz ręcznie.`
         : `Wszyscy z pliku ${im.plik || 'Z'} są już w kartotece. Kogo nie ma w pliku, dodasz ręcznie.`;
   return `
     <div class="przej-gora">${zdz(wyn ? 'duma' : 'czyta', 'unosi')}<div class="dymek ogon-lewo" style="--ogon:70%"><div class="d-tyt">ZDZISŁAW · IMPORT Z PLIKU Z<span class="kursor"></span></div>${T(tekst)}${wyn ? `<div class="d-akcje"><button data-a="ekran" data-v="przejscie">Przejście — połącz stare konta</button><button data-a="ekran" data-v="zaloga">Załoga</button></div>` : ''}</div></div>
@@ -1877,11 +1860,9 @@ function renderImport() {
           <button class="glowny" data-a="imp-dodaj" ${zazn.length && !S.zajety ? '' : 'disabled'}>${ik('plus')} ${S.zajety ? 'Dodaję…' : `Dodaj zaznaczone (${zazn.length})`}</button>
         </div>
       </div>
-      <div class="imp-ustaw"><span class="pod">Ustaw zaznaczonym:</span>${['F', 'R', 'T', 'M', 'B'].map(z => `<button class="mb" style="--kol:${ZESPOLY[z].kol}" data-a="imp-ustaw" data-v="${z}" ${zazn.length ? '' : 'disabled'}>${ZESPOLY[z].nazwa}</button>`).join('')}</div>
       <div class="imp-lista">
-        ${nowi.map(o => { const z = im.zesp[o.etykieta] || 'F'; return `<div class="imp-w ${im.zazn.has(o.etykieta) ? '' : 'wyl'}">
-          <label class="imp-l"><input type="checkbox" data-w="imp-zazn" data-e="${esc(o.etykieta)}" ${im.zazn.has(o.etykieta) ? 'checked' : ''}><span class="awatar maly" style="--kol:${ZESPOLY[z].kol}">${esc((o.imie || '?')[0])}</span><span class="tr"><b>${esc(o.imie)} ${esc(o.nazwisko)}</b><small>w pliku: ${esc(o.etykieta)}</small></span></label>
-          <span class="seg imp-z" role="group" aria-label="Zespół — ${esc(o.imie)} ${esc(o.nazwisko)}">${['F', 'R', 'T', 'M', 'B'].map(x => `<button data-a="imp-zesp" data-e="${esc(o.etykieta)}" data-v="${x}" aria-pressed="${z === x}" title="${ZESPOLY[x].nazwa}">${x}</button>`).join('')}</span>
+        ${nowi.map(o => { return `<div class="imp-w ${im.zazn.has(o.etykieta) ? '' : 'wyl'}">
+          <label class="imp-l"><input type="checkbox" data-w="imp-zazn" data-e="${esc(o.etykieta)}" ${im.zazn.has(o.etykieta) ? 'checked' : ''}><span class="awatar maly" style="--kol:${KOL_OSOBY}">${esc((o.imie || '?')[0])}</span><span class="tr"><b>${esc(o.imie)} ${esc(o.nazwisko)}</b><small>w pliku: ${esc(o.etykieta)}</small></span></label>
         </div>`; }).join('')}
       </div>
     </div>` : ''}
@@ -2068,18 +2049,14 @@ function pokazOsobe(id) {
   render();
   setTimeout(() => { const w = $(`.wiersz[data-id="${id}"]`); if (w) w.scrollIntoView({ block: 'nearest' }); }, 30);
 }
-// nowy zespół główny schodzi z listy „pracuje też w”
-function ustawZespol(f, z) { f.zespol = z; if (f.dodatkowe) f.dodatkowe = f.dodatkowe.filter(x => x !== z); }
 function otworzNowa(typ) {
   S.menu = false;
-  const st = typ === 'osoba' ? (STANOWISKA.kuchF ? 'kuchF' : (D.stanowiska[0] || {}).id) : null;
-  const pre = st ? STANOWISKA[st] : null;
   S.okno = {
     rodzaj: 'nowa', bledy: {}, blad: '',
     f: {
-      typ, imie: typ === 'urzadzenie' ? 'Kokpit' : '', nazwisko: '', kafelek: '', telefon: '', stanowisko: st, dodatkowe: [],
-      zespol: pre ? pre.zespol : 'F', jezyk: 'pl', konto: pre ? pre.konto : true, login: '', loginRecz: false,
-      dostepy: pre ? kopiaDost(pre.dostepy) : { tablica: { rola: 'ekran', sekcje: D.sekcje.includes('FABRYKA') ? ['FABRYKA'] : D.sekcje.slice(0, 1) } },
+      typ, imie: typ === 'urzadzenie' ? 'Kokpit' : '', nazwisko: '', kafelek: '', telefon: '',
+      jezyk: 'pl', konto: true, login: '', loginRecz: false,
+      dostepy: typ === 'osoba' ? {} : { tablica: { rola: 'ekran', sekcje: D.sekcje.includes('FABRYKA') ? ['FABRYKA'] : D.sekcje.slice(0, 1) } },
     },
   };
   render();
@@ -2198,7 +2175,6 @@ const AKCJE = {
   'filtr-zal': el => { S.zal = { szukaj: '', zesp: el.dataset.zesp || 'wszyscy', stan: el.dataset.stan || 'wszyscy', modul: 'wszystkie', osoba: S.zal.osoba }; S.ekran = 'zaloga'; S.okno = null; render(); },
   'filtr-mod': el => { S.zal = { szukaj: '', zesp: 'wszyscy', stan: el.dataset.urz ? 'urzadzenia' : 'wszyscy', modul: el.dataset.v, osoba: null }; S.ekran = 'zaloga'; render(); },
   'filtry-zero': () => { S.zal = { szukaj: '', zesp: 'wszyscy', stan: 'wszyscy', modul: 'wszystkie', osoba: S.zal.osoba }; render(); },
-  'f-zesp': el => { S.zal.zesp = el.dataset.v; for (const b of $$('[data-a="f-zesp"]')) b.setAttribute('aria-pressed', b === el); renderListaZal(); },
   'f-stan': el => { S.zal.stan = el.dataset.v; for (const b of $$('[data-a="f-stan"]')) b.setAttribute('aria-pressed', b === el); renderListaZal(); },
   osoba: el => {
     const id = el.dataset.id;
@@ -2279,12 +2255,6 @@ const AKCJE = {
     S.okno = { rodzaj: 'dane', id: o.id, blad: '', f: { imie: o.imie, nazwisko: o.nazwisko, kafelek: o.kafelek || '', telefon: telTxt(o.telefon || ''), zespol: o.zespol, dodatkowe: dodZesp(o), stanowisko: o.stanowisko || '', jezyk: o.jezyk, notatka: o.notatka || '', login: o.login }, wroc: S.okno && S.okno.rodzaj === 'osoba' ? S.okno : null };
     render();
   },
-  'd-zesp': el => { ustawZespol(S.okno.f, el.dataset.v); render(); },
-  'zesp-dod': el => {   // „pracuje też w” — w oknie Dane i Nowa osoba
-    const f = S.okno.f; const z = el.dataset.v; const d = f.dodatkowe || [];
-    f.dodatkowe = KOL_ZESP.filter(x => x !== f.zespol && (x === z ? !d.includes(z) : d.includes(x)));
-    render();
-  },
   'd-jez': el => { S.okno.f.jezyk = el.dataset.v; render(); },
   'd-zapisz': async () => {
     const ok = S.okno; const o = PO_ID[ok.id]; const f = ok.f;
@@ -2293,8 +2263,8 @@ const AKCJE = {
     else {
       if (!f.imie.trim() || !f.nazwisko.trim()) { ok.blad = 'Imię i nazwisko nie mogą być puste.'; render(); potrzasnij(); return; }
       if (o.typ === 'osoba' && telNorm(f.telefon) === null) { ok.blad = BLAD_TEL; render(); potrzasnij(); return; }
-      Object.assign(p, { imie: f.imie, nazwisko: f.nazwisko, zespol: f.zespol, notatka: f.notatka });
-      if (o.typ === 'osoba') Object.assign(p, { kafelek: f.kafelek, telefon: telNorm(f.telefon) || '', stanowisko: f.stanowisko || '', jezyk: f.jezyk, zespoly_dodatkowe: (f.dodatkowe || []).filter(z => z !== f.zespol) });
+      Object.assign(p, { imie: f.imie, nazwisko: f.nazwisko, notatka: f.notatka });
+      if (o.typ === 'osoba') Object.assign(p, { kafelek: f.kafelek, telefon: telNorm(f.telefon) || '', jezyk: f.jezyk });
       if (!o.konto && f.login.trim() && f.login.trim() !== o.login) p.login = f.login.trim();
     }
     const r = await wykonaj(() => API.zapiszOsobe(p), true);
@@ -2307,8 +2277,6 @@ const AKCJE = {
   /* nowa osoba / urządzenie */
   'nowa-osoba': () => otworzNowa('osoba'),
   'nowe-urzadzenie': () => otworzNowa('urzadzenie'),
-  'n-st': el => { const f = S.okno.f; const st = STANOWISKA[el.dataset.v]; f.stanowisko = el.dataset.v; ustawZespol(f, st.zespol); f.konto = st.konto; f.dostepy = kopiaDost(st.dostepy); render(); },
-  'n-zesp': el => { ustawZespol(S.okno.f, el.dataset.v); render(); },
   'n-jez': el => { S.okno.f.jezyk = el.dataset.v; render(); },
   'n-konto': el => { S.okno.f.konto = el.dataset.v === '1'; render(); },
   'n-przel': el => { const f = S.okno.f; zmienDost(f.dostepy, el.dataset.m, 'przel', el, f); render(); },
@@ -2324,8 +2292,8 @@ const AKCJE = {
     ok.bledy = b; ok.blad = '';
     if (f.konto && !ileDost(f.dostepy)) ok.blad = 'Konto bez żadnego dostępu nic nie otworzy — włącz choć jeden moduł albo wybierz „Tylko w kartotece”.';
     if (Object.keys(b).length || ok.blad) { render(); potrzasnij(); return; }
-    const p = { typ: f.typ, imie: f.imie, nazwisko: f.nazwisko, zespol: f.zespol, dostepy: f.dostepy };
-    if (!urz) Object.assign(p, { kafelek: f.kafelek, telefon: telNorm(f.telefon) || '', stanowisko: f.stanowisko || '', jezyk: f.jezyk, zespoly_dodatkowe: (f.dodatkowe || []).filter(z => z !== f.zespol) });
+    const p = { typ: f.typ, imie: f.imie, nazwisko: f.nazwisko, dostepy: f.dostepy };
+    if (!urz) Object.assign(p, { kafelek: f.kafelek, telefon: telNorm(f.telefon) || '', jezyk: f.jezyk });
     if (f.loginRecz && f.login) p.login = f.login;
     S.zajety = true; render();
     let o;
@@ -2425,11 +2393,10 @@ const AKCJE = {
   /* import z pliku Z */
   'imp-odswiez': () => { S.imp = null; render(); },
   'imp-wszystkie': () => { const nowi = S.imp.osoby.filter(o => !o.jest); const z = S.imp.zazn; if (nowi.every(o => z.has(o.etykieta))) z.clear(); else nowi.forEach(o => z.add(o.etykieta)); render(); },
-  'imp-zesp': el => { S.imp.zesp[el.dataset.e] = el.dataset.v; render(); },
   'imp-ustaw': el => { for (const e of S.imp.zazn) S.imp.zesp[e] = el.dataset.v; render(); toast('ok', 'ZESPÓŁ USTAWIONY', `${S.imp.zazn.size} ${odm(S.imp.zazn.size, 'osoba', 'osoby', 'osób')} → ${ZESPOLY[el.dataset.v].nazwa}.`); },
   'imp-dodaj': async () => {
     const im = S.imp;
-    const lista = im.osoby.filter(o => !o.jest && im.zazn.has(o.etykieta)).map(o => ({ imie: o.imie, nazwisko: o.nazwisko, zespol: im.zesp[o.etykieta] || 'F' }));
+    const lista = im.osoby.filter(o => !o.jest && im.zazn.has(o.etykieta)).map(o => ({ imie: o.imie, nazwisko: o.nazwisko }));
     if (!lista.length) return;
     const r = await wykonaj(() => API.importZ(lista, im.plik));
     if (!r) { render(); return; }
@@ -2478,7 +2445,6 @@ document.addEventListener('change', e => {
   if (w === 'f-modul') { S.zal.modul = el.value; renderListaZal(); }
   else if (w === 'karta-zazn') { el.checked ? S.karty.zazn.add(el.dataset.id) : S.karty.zazn.delete(el.dataset.id); render(); }
   else if (w === 'prz-osoba') { S.prz.wyb[el.dataset.k] = el.value || null; render(); }
-  else if (w === 'd-st') S.okno.f.stanowisko = el.value;
   else if (w === 'imp-zazn') { el.checked ? S.imp.zazn.add(el.dataset.e) : S.imp.zazn.delete(el.dataset.e); render(); }
 });
 document.addEventListener('keydown', e => {
