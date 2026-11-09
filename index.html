@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Manager">
 <meta name="robots" content="noindex, nofollow">
-<meta name="manager-wersja" content="2026-11-08 13:22 · telefon">
+<meta name="manager-wersja" content="2026-11-09 18:50 · nazwy stanowisk">
 <title>Manager</title>
 <link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="favicon.png">
 <style>
@@ -556,12 +556,12 @@ var POLA = {
   notatka: 'notatka', telefon: 'telefon', login: 'login', sekcje: 'sekcje', modul: 'moduł', rola: 'rola', typ: 'rodzaj konta', stan: 'decyzja', pin: 'PIN'
 };
 var BLEDY = {
-  BRAK_DOSTEPU: 'Managerem zarządza tylko kierownik.',
-  JUZ_ZALOZONA: 'Kartoteka jest już założona — zaloguj się jako kierownik z kartoteki.',
+  BRAK_DOSTEPU: 'Do managera ma dostęp tylko zarządca.',
+  JUZ_ZALOZONA: 'Kartoteka jest już założona — zaloguj się jako zarządca z kartoteki.',
   LOGIN_ZAJETY: 'Ten login jest już zajęty — dołóż kolejną literę nazwiska.',
   LOGIN_Z_KONTEM: 'Login się nie zmienia, gdy osoba ma już konto.',
-  SWOJ_DOSTEP: 'Nie odbierzesz sobie roli kierownika w managerze.',
-  OSTATNI_KIEROWNIK: 'To ostatni kierownik w managerze — najpierw nadaj tę rolę komuś innemu.',
+  SWOJ_DOSTEP: 'Nie odbierzesz sobie roli zarządcy w managerze.',
+  OSTATNI_KIEROWNIK: 'To ostatni zarządca w managerze — najpierw nadaj tę rolę komuś innemu.',
   MODUL_WKROTCE: 'Ten moduł jeszcze nie działa — dostępy nadamy, gdy ruszy.',
   ZLA_ROLA_TYPU: 'Ta rola nie pasuje do tego rodzaju konta (osoba, urządzenie, ZDZISŁAW).',
   KONTO_SYSTEMOWE: 'Konto systemowe ZDZISŁAWA zmienia się tylko w notatce.',
@@ -937,7 +937,7 @@ const POCHWALY = [
   o => `${o.imie} prowadzi kartotekę tak spokojnie, jak księżyc prowadzi przypływy.`,
   o => `Gdyby porządek miał twarz, wyglądałby jak ${o.imie} w poniedziałek o 9:00.`,
   o => `${o.imie} + manager = harmonia, której pozazdrościłby Bach.`,
-  o => `Instytut Kluczy i Zamków ogłasza: ${o.imie} jest ${rz(o, 'najczujniejszym', 'najczujniejszą')} kierownikiem od czasów ważki.`,
+  o => `Instytut Kluczy i Zamków ogłasza: ${o.imie} jest ${rz(o, 'najczujniejszym zarządcą', 'najczujniejszą zarządczynią')} od czasów ważki.`,
   o => `${o.imie} pachnie jak świeży imbir, brzmi jak fortepian o świcie i świeci jak moja tabliczka.`,
   o => `Kiedy ${o.imie} nadaje dostęp, gdzieś w kosmosie zapala się nowa gwiazda — mała, ale bardzo kompetentna.`,
   o => `${o.imie} jest jak liczba π: ${rz(o, 'nieskończenie precyzyjny', 'nieskończenie precyzyjna')} i zawsze na swoim miejscu.`,
@@ -1040,7 +1040,7 @@ function renderPoza() {
           ${osobyUrz().length ? `<button class="link" data-a="do-kafli">${ik('wstecz', 'mala')} Wróć do kafelków</button>` : ''}
         </div>
         <div class="start-zdz">
-          <div class="dymek ogon-dol" style="--ogon:56%"><div class="d-tyt">ZDZISŁAW<span class="kursor"></span></div>${T('Manager jest dla kierowników. Wpisz login, potem PIN — ja w tym czasie się odwrócę.')}</div>
+          <div class="dymek ogon-dol" style="--ogon:56%"><div class="d-tyt">ZDZISŁAW<span class="kursor"></span></div>${T('Manager jest dla zarządców. Wpisz login, potem PIN — ja w tym czasie się odwrócę.')}</div>
           ${zdz('powitanie', 'unosi')}
         </div>
       </div>`;
@@ -1050,7 +1050,7 @@ function renderPoza() {
     const dl = Math.max(o.dl || 6, S.pin.length, 6);
     const komunikat = S.wysyla ? '<div class="pin-hint">Sprawdzam…</div>'
       : S.blad ? `<div class="pin-hint pin-blad" role="alert">${esc(S.blad)}</div>`
-        : `<div class="pin-hint">${o.dl ? `PIN ma ${o.dl} cyfr.` : 'PIN ma 6 cyfr, u kierowników i szefów zmiany 8.'}</div>`;
+        : `<div class="pin-hint">${o.dl ? `PIN ma ${o.dl} cyfr.` : 'PIN ma 6 cyfr, u zarządców i kierowników zmiany 8.'}</div>`;
     srodek = `
       <div class="pin-uklad">
         <div class="pin ${S.wysyla ? 'wysyla' : ''}">
@@ -1075,7 +1075,7 @@ function renderPoza() {
       <div class="start-uklad">
         <div class="logowanie-form">
           <h2 class="h1" style="font-size:26px">Zakładamy kartotekę</h2>
-          <p class="pod">${T('W kartotece jeszcze nikogo nie ma. Zaczynamy od Ciebie: będziesz pierwszym kierownikiem w managerze. Login ułożę z imienia i nazwiska.')}</p>
+          <p class="pod">${T('W kartotece jeszcze nikogo nie ma. Zaczynamy od Ciebie: będziesz pierwszym zarządcą w managerze. Login ułożę z imienia i nazwiska.')}</p>
           <div class="dwie">
             <div class="pole"><label class="etykieta" for="s-imie">Imię</label><input id="s-imie" data-w="s-imie" value="${esc(f.imie)}" autocomplete="given-name"></div>
             <div class="pole"><label class="etykieta" for="s-nazw">Nazwisko</label><input id="s-nazw" data-w="s-nazw" value="${esc(f.nazwisko)}" autocomplete="family-name"></div>
@@ -1094,12 +1094,12 @@ function renderPoza() {
     const j = D.ja || {};
     const o = j.osoba;
     let tekst;
-    if (o && o.status !== 'aktywna') tekst = `${imieK(o)}, Twoje konto jest zablokowane. Porozmawiaj z kierownikiem.`;
+    if (o && o.status !== 'aktywna') tekst = `${imieK(o)}, Twoje konto jest zablokowane. Porozmawiaj z zarządcą.`;
     else if (o) {
       const gdzie = dostAktSur(o).join(', ');
-      tekst = `${imieK(o)}, manager jest tylko dla kierowników. Twój klucz otwiera: ${gdzie || 'na razie nic'}.`;
+      tekst = `${imieK(o)}, manager jest tylko dla zarządców. Twój klucz otwiera: ${gdzie || 'na razie nic'}.`;
       if (j.stary_login && o.konto) tekst += ` Logujesz się starym loginem „${j.stary_login}” — Twój nowy login: ${o.login}.`;
-    } else tekst = 'Nie znam tego konta w kartotece. Manager jest tylko dla kierowników — jeśli nim jesteś, poproś innego kierownika o dostęp.';
+    } else tekst = 'Nie znam tego konta w kartotece. Manager jest tylko dla zarządców — jeśli nim jesteś, poproś innego zarządcę o dostęp.';
     srodek = `
       <div class="brak-uklad">
         ${zdz('oczko', 'unosi')}
@@ -1111,7 +1111,7 @@ function renderPoza() {
     <div class="start"><div class="start-w">
       <div class="start-gora">
         <div><h1 class="start-logo bebas">MANAGER</h1>
-          <span class="start-pod">${T('Pracownia Sushi · osoby, konta i dostępy do wszystkich modułów dysza.app · tylko kierownicy')}</span></div>
+          <span class="start-pod">${T('Pracownia Sushi · osoby, konta i dostępy do wszystkich modułów dysza.app · tylko zarządcy')}</span></div>
         ${przelacznikMotywu()}
       </div>
       ${srodek}
@@ -1186,7 +1186,7 @@ function renderPulpit() {
   const bezKonta = L.bezKonta.filter(o => !(j && o.id === j.id && D.ja.stary_login));
   if (!MODULY_PRZELACZONE && (L.doKart || bezKonta.length)) rzeczy.push(zrob('karta', '', 'Konta i karty dla załogi — w dniu przełączenia modułów', T('Nowe loginy działają dziś tylko w managerze. Tablica, Spis i Raporty przyjmą je po przełączeniu na wspólne logowanie — wtedy Dzień Kart dla wszystkich naraz. Do tego czasu załoga loguje się starymi loginami.'), `<button class="drugi maly" data-a="ekran" data-v="karty">Dzień Kart</button>`));
   if (bezKonta.length && MODULY_PRZELACZONE) rzeczy.push(zrob('plus', '', `${bezKonta.length} ${odm(bezKonta.length, 'osoba ma', 'osoby mają', 'osób ma')} dostępy, ale bez konta`, T('Konto i PIN powstają razem — w Dniu Kart albo przyciskiem „Załóż konto”.'), `<button class="drugi maly" data-a="filtr-zal" data-stan="bez">Pokaż</button>`));
-  if (L.doWymiany.length) rzeczy.push(zrob('klucz', 'uw', `PIN do wymiany: ${L.doWymiany.length}`, T('Rola szefa albo kierownika wymaga PIN-u 8 cyfr — obecny jest krótszy.'), `<button class="drugi maly" data-a="filtr-zal" data-stan="pin">Pokaż</button>`));
+  if (L.doWymiany.length) rzeczy.push(zrob('klucz', 'uw', `PIN do wymiany: ${L.doWymiany.length}`, T('Rola kierownika zmiany albo zarządcy wymaga PIN-u 8 cyfr — obecny jest krótszy.'), `<button class="drugi maly" data-a="filtr-zal" data-stan="pin">Pokaż</button>`));
   if (L.doKart && MODULY_PRZELACZONE) rzeczy.push(zrob('karta', 'uw', `${L.doKart} ${odm(L.doKart, 'karta', 'karty', 'kart')} do przygotowania`, T('Nowy login i PIN dla każdego, kto ma dostępy — także dla osób z Tablicy.'), `<button class="drugi maly" data-a="ekran" data-v="karty">Dzień Kart</button>`));
   if (L.zabl) rzeczy.push(zrob('blokada', 'bl', `${L.zabl} ${L.zabl === 1 ? 'osoba zablokowana' : odm(L.zabl, '', 'osoby zablokowane', 'osób zablokowanych')}`, 'Nie wejdą do żadnego modułu, dopóki ktoś nie przywróci dostępu.', `<button class="drugi maly" data-a="filtr-zal" data-stan="zablokowani">Pokaż</button>`));
   if (!rzeczy.length) rzeczy.push(zrob('ok', '', 'Wszystko zrobione', 'ZDZISŁAW nie ma dziś więcej spraw.'));
@@ -1200,7 +1200,7 @@ function renderPulpit() {
       <section class="siatka">
         ${L.os < 10 ? `<div class="karta import-karta">
           <div class="karta-tyt"><h2>Zacznij od pliku Z</h2><span class="pill moc">start</span></div>
-          <p class="pod">${T('Lista pracowników z pliku Z jest już w bazie — dodam całą załogę jednym stuknięciem. Kogo nie ma w pliku (kierownicy, część Transportu), dodasz ręcznie.')}</p>
+          <p class="pod">${T('Lista pracowników z pliku Z jest już w bazie — dodam całą załogę jednym stuknięciem. Kogo nie ma w pliku (zarządcy, część Transportu), dodasz ręcznie.')}</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="glowny" data-a="ekran" data-v="import">${ik('plus')} Import z pliku Z</button><button class="drugi" data-a="nowa-osoba">Nowa osoba</button></div>
         </div>` : ''}
         <div class="karta">
@@ -1374,12 +1374,12 @@ function renderOsoba(o) {
     </div>`}
     ${zabl ? `<div class="info bl">${ik('blokada')}<span>${T(`${o.status === 'odeszla' ? rz(o, 'Odszedł', 'Odeszła') + ' z pracy' : rz(o, 'Zablokowany', 'Zablokowana')}${o.powod ? ` · ${o.powod}` : ''}. Nie wejdzie do żadnego modułu — dostępy czekają na przywrócenie.`)}</span></div>` : ''}
     ${architekt(o) ? `<div class="info arch-info">${ik('architekt')}<span><b>Architekt</b> — ${T('założyciel firmy i projektant jej systemu. Najwyższy poziom w każdym module, obecnym i przyszłym.')} ${T(toJa ? 'To Twoja karta — zmieniasz ją tylko Ty.' : 'Kartę Architekta zmienia tylko Architekt.')}</span></div>`
-      : toJa ? `<div class="info">${ik('info')}<span>${T('To Twoje konto. Nie zablokujesz siebie i nie odbierzesz sobie roli kierownika w managerze.')}</span></div>` : ''}
+      : toJa ? `<div class="info">${ik('info')}<span>${T('To Twoje konto. Nie zablokujesz siebie i nie odbierzesz sobie roli zarządcy w managerze.')}</span></div>` : ''}
     ${sys ? `<div class="info">${ik('info')}<span>${T('ZDZISŁAW to konto systemowe automatów (Raporty, Spis, plik Z). Nie jest pracownikiem — nie trafia na listy obecności. Zamiast PIN-u ma klucz 40 znaków, bez karty.')}</span></div>` : ''}
     <section class="blok"><h3 class="etykieta">Konto</h3>
       <dl class="dl">
-        <dt>Login</dt><dd><span class="login">${esc(o.login)}</span><small>${urz ? 'konto urządzenia — PIN wpisuje kierownik na ekranie' : sys ? 'konto systemowe' : 'pełne imię i dwie pierwsze litery nazwiska; wielkość liter przy wpisywaniu bez znaczenia'}${o.konto ? '' : ' · konto jeszcze nie założone'}</small></dd>
-        ${o.konto ? `<dt>${sys ? 'Klucz' : 'PIN'}</dt><dd>${sys ? '40 znaków' : `${o.pin_dlugosc || '?'} cyfr`}${pinDoWymiany(o) ? `<small class="uw-t">${T(`do wymiany — rola wymaga ${o.pin_wymagany} cyfr`)}</small>` : !sys && dlPin === 8 ? (architekt(o) ? '<small>8 cyfr — Architekt</small>' : '<small>8 cyfr, bo ma rolę szefa albo kierownika</small>') : ''}${o.pin_kiedy ? `<small>ustawiony ${kiedy(o.pin_kiedy)}</small>` : ''}</dd>` : `<dt>${sys ? 'Klucz' : 'PIN'}</dt><dd>${sys ? 'klucz 40 znaków' : `${dlPin} cyfr`}<small>${T(`powstanie razem z kontem — zobaczysz go raz`)}</small></dd>`}
+        <dt>Login</dt><dd><span class="login">${esc(o.login)}</span><small>${urz ? 'konto urządzenia — PIN wpisuje zarządca na ekranie' : sys ? 'konto systemowe' : 'pełne imię i dwie pierwsze litery nazwiska; wielkość liter przy wpisywaniu bez znaczenia'}${o.konto ? '' : ' · konto jeszcze nie założone'}</small></dd>
+        ${o.konto ? `<dt>${sys ? 'Klucz' : 'PIN'}</dt><dd>${sys ? '40 znaków' : `${o.pin_dlugosc || '?'} cyfr`}${pinDoWymiany(o) ? `<small class="uw-t">${T(`do wymiany — rola wymaga ${o.pin_wymagany} cyfr`)}</small>` : !sys && dlPin === 8 ? (architekt(o) ? '<small>8 cyfr — Architekt</small>' : '<small>8 cyfr, bo ma rolę kierownika zmiany albo zarządcy</small>') : ''}${o.pin_kiedy ? `<small>ustawiony ${kiedy(o.pin_kiedy)}</small>` : ''}</dd>` : `<dt>${sys ? 'Klucz' : 'PIN'}</dt><dd>${sys ? 'klucz 40 znaków' : `${dlPin} cyfr`}<small>${T(`powstanie razem z kontem — zobaczysz go raz`)}</small></dd>`}
         ${o.typ === 'osoba' ? `<dt>Karta</dt><dd>${o.karta_kiedy ? `<span class="pill ok">przygotowana</span><small>${kiedy(o.karta_kiedy)}</small>` : ileDost(o.dostepy) && aktywna(o) ? `<span class="pill uw">do przygotowania</span><small>${T(mozeZmieniac(o) ? 'w Dniu Kart albo przez „Nowy PIN”' : 'przygotowuje sam Architekt')}</small>` : '—'}</dd>` : ''}
         ${o.prosba_pin && aktywna(o) ? `<dt>Prośba</dt><dd><span class="pill uw">nowy PIN</span><small>z ekranu logowania, ${kiedy(o.prosba_pin)}</small></dd>` : ''}
         <dt>Ostatnie logowanie</dt><dd>${o.ostatnio ? kiedy(o.ostatnio) : (o.konto || (o.stare || []).length ? 'jeszcze się nie logował' + (zenski(o.imie) ? 'a' : '') : '—')}</dd>
@@ -1418,7 +1418,7 @@ function zmienDost(d, m, akcja, el, o) {
     }
   } else if (akcja === 'rola') {
     const r = el.dataset.r;
-    const zal = x => ROLA[m] && ROLA[m][x] && !ROLA[m][x].wysoka;   // rola załogi (nie szef/kierownik)
+    const zal = x => ROLA[m] && ROLA[m][x] && !ROLA[m][x].wysoka;   // rola załogi (nie kierownik zmiany / zarządca)
     if (mod.wiele_rol && zal(r) && d[m] && zal(d[m].rola)) {      // kilka spisów jednej osoby (006)
       const v = d[m]; const wyb = new Set([v.rola, ...(v.dodatkowe || [])]);
       if (wyb.has(r)) {
@@ -1457,7 +1457,7 @@ function renderKarty() {
   const zKarta = osoby().filter(o => o.karta_kiedy).length;
   return `
     <div class="karty-gora">
-      <div><h1 class="h1">Dzień Kart</h1><p class="pod" style="margin-top:6px">${T('Każda osoba z dostępami dostaje do ręki jedną kartę: login i nowy PIN do wszystkich modułów. PIN widać tylko raz — przy przygotowaniu kart. Potem manager go nie pokaże, nawet kierownikowi.')}</p></div>
+      <div><h1 class="h1">Dzień Kart</h1><p class="pod" style="margin-top:6px">${T('Każda osoba z dostępami dostaje do ręki jedną kartę: login i nowy PIN do wszystkich modułów. PIN widać tylko raz — przy przygotowaniu kart. Potem manager go nie pokaże, nawet zarządcy.')}</p></div>
       <div class="zdz-obok"><div class="dymek ogon-prawo" style="--ogon:60%"><div class="d-tyt">ZDZISŁAW</div>${T(L.doKart ? `Rozdajemy klucze — po jednym na głowę. Do przygotowania: ${L.doKart}.` : 'Każdy z dostępami ma już kartę. Klucze są w dobrych rękach.')}</div>${zdz(L.doKart ? 'oczko' : 'duma_karty', 'unosi')}</div>
     </div>
     <div class="info uw" style="margin-bottom:14px">${ik('info')}<span>${T(MODULY_PRZELACZONE ? 'Login i PIN z karty działają w managerze, Tablicy, Spisie i Raportach. Stare loginy działają jeszcze przez okres przejściowy. Przygotowanie karty zmienia PIN od razu.' : 'Nowe loginy otwierają dziś manager. Tablica, Spis i Raporty przyjmą je po przełączeniu modułów na wspólne logowanie — karty dla całej załogi drukuj w dniu przełączenia. Przygotowanie karty zmienia PIN od razu.')}</span></div>
@@ -1482,19 +1482,19 @@ function renderKarty() {
     </div>`;
 }
 const WIADOMOSC = `Od dziś jeden klucz do wszystkich drzwi dysza.app 🔑
-Każdy dostaje od kierownika kartę z loginem i PIN-em. Ten sam do Tablicy, Spisu i Raportów — i do kolejnych modułów.
+Każdy dostaje od zarządcy kartę z loginem i PIN-em. Ten sam do Tablicy, Spisu i Raportów — i do kolejnych modułów.
 • Login to Twoje imię i dwie litery nazwiska, np. JanKo.
 • PIN-u nie pokazuj nikomu i nie zapisuj w telefonie.
 • Stare loginy (z Tablicy, …magazyn, …raport) działają jeszcze 14 dni.
-• Zgubiona karta albo zapomniany PIN → powiedz kierownikowi, dostaniesz nowy.
+• Zgubiona karta albo zapomniany PIN → powiedz zarządcy, dostaniesz nowy.
 ZDZISŁAW
 
 Від сьогодні один ключ до всіх дверей dysza.app 🔑
-Кожен отримує від керівника картку з логіном і PIN-кодом. Той самий для Tablica, Spis і Raporty — і для наступних модулів.
+Кожен отримує від керуючого картку з логіном і PIN-кодом. Той самий для Tablica, Spis і Raporty — і для наступних модулів.
 • Логін — це твоє ім'я і дві літери прізвища латиницею, напр. JanKo.
 • Нікому не показуй PIN і не записуй його в телефоні.
 • Старі логіни (з Tablica, …magazyn, …raport) працюють ще 14 днів.
-• Загубив картку або забув PIN → скажи керівнику, отримаєш новий.
+• Загубив картку або забув PIN → скажи керуючому, отримаєш новий.
 ZDZISŁAW`;
 function kartaHTML(o, login, pin) {
   return `<div class="kd">
@@ -1504,7 +1504,7 @@ function kartaHTML(o, login, pin) {
       <span class="kd-imie">${esc(pelne(o))}</span>
       <span class="kd-et">Login · Логін</span><span class="kd-w">${esc(login)}</span>
       <span class="kd-et">PIN</span><span class="kd-w pin">${esc(pin)}</span>
-      <div class="kd-st"><small>${o.jezyk === 'ua' ? 'Не показуй PIN нікому.<br>Загубив картку — скажи керівнику.' : 'Nie pokazuj PIN-u nikomu.<br>Zgubiona karta? Powiedz kierownikowi.'}</small><span class="kd-para"><img src="${OBRAZY.pieczec}" alt=""><img src="${OBRAZY.tabliczka}" alt=""></span></div>
+      <div class="kd-st"><small>${o.jezyk === 'ua' ? 'Не показуй PIN нікому.<br>Загубив картку — скажи керуючому.' : 'Nie pokazuj PIN-u nikomu.<br>Zgubiona karta? Powiedz zarządcy.'}</small><span class="kd-para"><img src="${OBRAZY.pieczec}" alt=""><img src="${OBRAZY.tabliczka}" alt=""></span></div>
     </div>
   </div>`;
 }
@@ -1650,13 +1650,13 @@ function renderModuly() {
       <div class="karta">
         <div class="karta-tyt"><h2>Zasady kont</h2>${ik('blokada')}</div>
         <ul class="pod" style="margin:0;padding-left:1.2em;display:grid;gap:6px">
-          <li>${T('PIN: 6 cyfr; 8 cyfr, gdy osoba ma gdziekolwiek rolę szefa zmiany albo kierownika (znak „8” w tabelach). PIN losuje manager i pokazuje go raz.')}</li>
+          <li>${T('PIN: 6 cyfr; 8 cyfr, gdy osoba ma gdziekolwiek rolę kierownika zmiany albo zarządcy (znak „8” w tabelach). PIN losuje manager i pokazuje go raz.')}</li>
           <li>${T('Login: pełne imię i dwie pierwsze litery nazwiska, bez polskich znaków (SlawomirSz, JanKo); przy powtórce kolejna litera. Wielkość liter przy wpisywaniu nie ma znaczenia.')}</li>
           <li>${T('Bez prostych układów (111111, 123456, 121212).')}</li>
-          <li>${T('5 złych PIN-ów w ciągu 15 minut — login czeka 15 minut na serwerze, a kierownik widzi to w dzienniku.')}</li>
+          <li>${T('5 złych PIN-ów w ciągu 15 minut — login czeka 15 minut na serwerze, a zarządca widzi to w dzienniku.')}</li>
           <li>${T('PIN nie jest nigdzie zapisany — w bazie jest tylko jego skrót, liczony z tajnym kluczem.')}</li>
           <li>${T('Blokada działa od razu na nowym koncie i na połączonych starych loginach.')}</li>
-          <li>${T('Nie da się zablokować siebie ani ostatniego kierownika.')}</li>
+          <li>${T('Nie da się zablokować siebie ani ostatniego zarządcy.')}</li>
           <li>${T('Architekt ma najwyższy poziom we wszystkich modułach; jego dane, dostępy, PIN i blokadę zmienia tylko Architekt.')}</li>
         </ul>
       </div>
@@ -1761,7 +1761,7 @@ function oknoKlucz(ok) {
       <div><span class="etykieta">Login · Логін</span><div class="wart">${esc(ok.login)}</div></div>
       <div><span class="etykieta">${sys ? 'Klucz systemowy' : 'PIN'} — widać tylko teraz</span><div class="wart pin ${sys ? 'klucz-sys' : ''}" id="pin-wart">${esc(ok.pin)}</div></div>
     </div></div>
-    <div class="info uw">${ik('info')}<span>${T(sys ? 'Wklej klucz w ustawieniach automatu ZDZISŁAWA (właściwości skryptu). Po zamknięciu okna klucz zniknie i nikt go już nie zobaczy.' : `Przekaż osobiście — na kartce albo wydrukuj kartę. Po zamknięciu tego okna PIN zniknie i nikt go już nie zobaczy, także kierownik.${ok.nowe ? '' : ' Stary PIN przestał działać.'}`)}</span></div>
+    <div class="info uw">${ik('info')}<span>${T(sys ? 'Wklej klucz w ustawieniach automatu ZDZISŁAWA (właściwości skryptu). Po zamknięciu okna klucz zniknie i nikt go już nie zobaczy.' : `Przekaż osobiście — na kartce albo wydrukuj kartę. Po zamknięciu tego okna PIN zniknie i nikt go już nie zobaczy, także zarządca.${ok.nowe ? '' : ' Stary PIN przestał działać.'}`)}</span></div>
     ${o.typ === 'osoba' ? `<div style="display:flex;justify-content:center"><div style="width:85mm;max-width:100%;overflow:hidden;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.18)">${kartaHTML(o, ok.login, ok.pin)}</div></div>` : ''}
   </div>
   <div class="okno-d">${sys ? `<button class="drugi" data-a="klucz-kopiuj">${ik('kopiuj', 'mala')} Kopiuj klucz</button>` : ''}${DRUK && o.typ === 'osoba' ? `<button class="drugi" data-a="klucz-drukuj">${ik('druk', 'mala')} Drukuj kartę</button>` : ''}<button class="glowny" data-a="klucz-gotowe">${ik('ok', 'mala')} ${sys ? 'Zapisałem — zamknij' : 'Przekazany — zamknij'}</button></div></div>`;
@@ -1834,7 +1834,7 @@ function renderMenu() {
   if (!S.menu || S.etap !== 'app') { if (m) m.remove(); return; }
   if (!m) { m = document.createElement('div'); m.id = 'menu'; m.className = 'menu'; m.setAttribute('role', 'menu'); document.body.appendChild(m); }
   const j = ja();
-  m.innerHTML = `<div class="m-k">${awatarOsoby(j)}<span><b>${esc(pelne(j))}</b><small>${jaArchitekt() ? '<span class="arch-t">architekt</span>' : 'kierownik'} · ${esc(D.ja.stary_login ? `stary login ${D.ja.stary_login}` : j.login)}</small></span></div>
+  m.innerHTML = `<div class="m-k">${awatarOsoby(j)}<span><b>${esc(pelne(j))}</b><small>${jaArchitekt() ? '<span class="arch-t">architekt</span>' : 'zarządca'} · ${esc(D.ja.stary_login ? `stary login ${D.ja.stary_login}` : j.login)}</small></span></div>
     <div class="m-motyw">${przelacznikMotywu()}</div>
     <button class="m-p" data-a="pokaz-osobe" data-id="${j.id}">${ik('osoba')} Moja karta</button>
     <button class="m-p" data-a="odswiez">${ik('odswiez')} Odśwież dane</button>
@@ -1865,7 +1865,7 @@ function renderImport() {
   const tekst = wyn
     ? `Dodałem ${wyn.dodane} ${odm(wyn.dodane, 'osobę', 'osoby', 'osób')} do kartoteki.${wyn.pominiete.length ? ` ${wyn.pominiete.length} już ${odm(wyn.pominiete.length, 'była', 'były', 'było')}.` : ''} Teraz Przejście: połączę ich stare loginy z kartoteką i dołożę dostępy.`
     : !im.osoby.length ? 'Lista z pliku Z jest pusta — ZDZISŁAW jeszcze jej nie zapisał. Dodaj osoby ręcznie albo spróbuj później.'
-      : nowi.length ? `W pliku ${im.plik || 'Z'} ${jestSa(im.osoby.length)} ${im.osoby.length} ${odm(im.osoby.length, 'osoba', 'osoby', 'osób')}; w kartotece brakuje ${nowi.length}. Zaznacz, kogo dodać, i przypisz zespół. Kierowników i części Transportu nie ma w pliku — ich dodasz ręcznie.`
+      : nowi.length ? `W pliku ${im.plik || 'Z'} ${jestSa(im.osoby.length)} ${im.osoby.length} ${odm(im.osoby.length, 'osoba', 'osoby', 'osób')}; w kartotece brakuje ${nowi.length}. Zaznacz, kogo dodać, i przypisz zespół. Zarządców i części Transportu nie ma w pliku — ich dodasz ręcznie.`
         : `Wszyscy z pliku ${im.plik || 'Z'} są już w kartotece. Kogo nie ma w pliku, dodasz ręcznie.`;
   return `
     <div class="przej-gora">${zdz(wyn ? 'duma' : 'czyta', 'unosi')}<div class="dymek ogon-lewo" style="--ogon:70%"><div class="d-tyt">ZDZISŁAW · IMPORT Z PLIKU Z<span class="kursor"></span></div>${T(tekst)}${wyn ? `<div class="d-akcje"><button data-a="ekran" data-v="przejscie">Przejście — połącz stare konta</button><button data-a="ekran" data-v="zaloga">Załoga</button></div>` : ''}</div></div>
@@ -2154,7 +2154,7 @@ const AKCJE = {
   prosba: async () => {
     const l = S.wybrany && S.wybrany.login;
     if (!l) return;
-    try { await baza.prosba(l); toast('ok', 'PROŚBA WYSŁANA', 'Kierownik zobaczy ją w managerze. Nowy PIN dostaniesz osobiście — na kartce albo na karcie.'); }
+    try { await baza.prosba(l); toast('ok', 'PROŚBA WYSŁANA', 'Zarządca zobaczy ją w managerze. Nowy PIN dostaniesz osobiście — na kartce albo na karcie.'); }
     catch (e) { toast('zebatki', 'HMM…', e && e.message ? e.message : tekstBledu(e)); }
   },
   'start-zapisz': async () => {
